@@ -3,12 +3,15 @@
 #include "simulation.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include<iostream>
+#include<fstream>
+#include<sstream>
 
 // MACROS:
 #define SMALL_VEL (0.01f)
 
 // GLOBALS:
-curlingSheet gCurlingSheet;
+curlingSheet gCurlingSheet = new curlingSheet;
 
 float gCoeffRestitution = 0.5f;
 float gCoeffFriction = 0.03f;
@@ -38,9 +41,6 @@ void edge::MakeCentre(void) {
 	centre /= 2.0;
 }
 
-// Player class Members:
-int player::playerIndxCnt = 0;
-
 /**
 	STONE CLASS MEMBERS:
 		Defines two variables - rowIndex [stores the current row number], row [stores the current column number.]
@@ -54,6 +54,7 @@ int player::playerIndxCnt = 0;
 
 int stone::stoneIndxCnt = 0;
 void stone::Reset(void) {
+	// Set velocity to Zero.
 	velocity = 0.0;
 	if (indx == 0) {
 		stonePos(1) = TABLE_Z - 0.25;
@@ -96,7 +97,7 @@ void stone::DoPlaneCollision(const edge& e) {
 }
 
 void stone::DoTargetCollision(target& t) {
-
+	if (HasHitTarget()) HitTarget();
 }
 
 void stone::Update(int ms) {

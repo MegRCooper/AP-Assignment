@@ -3,6 +3,7 @@
 #include <glut.h>
 #include <math.h>
 #include "simulation.h"
+#include "player.h"
 
 // Aim Line variables:
 float gAimAngle = 0.0;

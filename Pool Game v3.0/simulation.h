@@ -1,5 +1,9 @@
 // Simulation Header File:
+#pragma once
 #include "vecmath.h"
+#include <string>
+#include <vector>
+#include <random>
 
 // Macros - Identifiers that represent statements or expressions:
 #define TABLE_X			(0.25f) 
@@ -106,47 +110,22 @@ public:
 	void SetPlayerStone(void);
 };
 
-/**
-	Player Class:
-	This provides the class definition for the player, consisting of two members [score & index]
-		score [int] - stores the current score, incremented everytime a point is won,
-		indx [int] - tracks how many times the player has been created
-	If index equals 0 then colour will be set to Red; otherwise it will be set to Yellow [trad Curling colours].
-	PlayerColours enum type with two possible values; RED, YELLOW. **/
-
-enum PlayersColours { RED, YELLOW };
-
-class player {
-	static int playerIndxCnt;
-public:
-	//int score;
-	bool isCurrntTurn;
-	int indx;
-	//PlayersColours colour;
-
-	//player() {
-	//	indx = playerIndxCnt++;
-	//	if (indx == 0) {
-	//		colour = RED;
-	//	}
-	//	else {
-	//		colour = YELLOW;
-	//	}
-	//	Reset();
-	//}
-	//void Reset(void);
-};
-
-/**
-	Teams Class:
-		The code declares a player class and an array of players.
-**/
-class teams {
-public:
-	player players[MAX_PLAYERS];
-	int currntNumPlayers = 0;
-	int currntScore = 0;
-};
+//// Player class:
+//class player {
+//public:
+//	std::string name;
+//	std::vector<int> scores;
+//	bool done;
+//	stone stone;
+//	bool hadFirstShot;
+//	player() {
+//		name = "Player " + std::to_string(stone.indx + 1);
+//		done = false;
+//		hadFirstShot = false;
+//	};
+//	
+//	~player() {};
+//};
 
 /**
 	Particle Class:
@@ -161,6 +140,7 @@ public:
 	An array called particles that stores pointers to all active particles in memory;
 	Num is set equal 0 when this class is created so no other objects are added into memory yet.
 **/
+
 class particle {
 public:
 	vec3 partPos;

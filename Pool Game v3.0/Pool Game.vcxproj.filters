@@ -41,6 +41,12 @@
     <ClInclude Include="glut-3.7.6-bin\glut.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
+    <ClInclude Include="glui-2.36\src\include\GL\glui.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="networkServer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
