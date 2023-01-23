@@ -4,7 +4,6 @@
 #include <math.h>
 #include "simulation.h"
 
-
 // Aim Line variables:
 float gAimAngle = 0.0;
 float gAimPower = 0.25;
