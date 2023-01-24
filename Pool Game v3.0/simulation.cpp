@@ -11,7 +11,7 @@
 #define SMALL_VEL (0.01f)
 
 // GLOBALS:
-curlingSheet gCurlingSheet = new curlingSheet;
+curlingSheet gCurlingSheet;
 
 float gCoeffRestitution = 0.5f;
 float gCoeffFriction = 0.03f;
@@ -97,7 +97,7 @@ void stone::DoPlaneCollision(const edge& e) {
 }
 
 void stone::DoTargetCollision(target& t) {
-	if (HasHitTarget()) HitTarget();
+	
 }
 
 void stone::Update(int ms) {

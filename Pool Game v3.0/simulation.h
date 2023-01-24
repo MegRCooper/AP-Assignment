@@ -110,22 +110,22 @@ public:
 	void SetPlayerStone(void);
 };
 
-//// Player class:
-//class player {
-//public:
-//	std::string name;
-//	std::vector<int> scores;
-//	bool done;
-//	stone stone;
-//	bool hadFirstShot;
-//	player() {
-//		name = "Player " + std::to_string(stone.indx + 1);
-//		done = false;
-//		hadFirstShot = false;
-//	};
-//	
-//	~player() {};
-//};
+// Player class:
+class player {
+public:
+	std::string name;
+	std::vector<int> scores;
+	bool done;
+	stone stone;
+	bool hadFirstShot;
+	player() {
+		name = "Player " + std::to_string(stone.indx + 1);
+		done = false;
+		hadFirstShot = false;
+	};
+	
+	~player() {};
+};
 
 /**
 	Particle Class:

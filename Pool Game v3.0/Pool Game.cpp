@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include <glut.h>
 #include <math.h>
+#include <thread>
 #include "simulation.h"
 #include "player.h"
 
