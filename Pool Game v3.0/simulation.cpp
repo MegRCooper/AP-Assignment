@@ -10,12 +10,12 @@
 // GLOBALS:
 // curlingSheet gCurlingSheet;
 
+static const float gRackPositionX[] = { 0.0f, 0.0f,(STONE_RADIUS * 2.0f),(-STONE_RADIUS * 2.0f),(STONE_RADIUS * 4.0f) };
+static const float gRackPositionZ[] = { 0.5f, 0.0f,(-STONE_RADIUS * 3.0f),(-STONE_RADIUS * 3.0f) };
+
 float gCoeffRestitution = 0.5f;
 float gCoeffFriction = 0.03f;
 float gGravityAcc = 9.8f;
-
-static const float gRackPositionX[] = { 0.0f, 0.0f,(STONE_RADIUS * 2.0f),(-STONE_RADIUS * 2.0f),(STONE_RADIUS * 4.0f) };
-static const float gRackPositionZ[] = { 0.5f, 0.0f,(-STONE_RADIUS * 3.0f),(-STONE_RADIUS * 3.0f) };
 
 /**
 	EDGE CLASS MEMBERS:
@@ -60,15 +60,8 @@ stone::stone(team _team) : stonePos(0.0), velocity(0.0), radius(STONE_RADIUS), m
 void stone::Reset(void) {
 	// Set velocity to Zero.
 	velocity = 0.0;
-	if (indx == 0) {
-		stonePos(1) = TABLE_Z - 0.25;
-		stonePos(0) = 0;
-	}
-	else {
-		stonePos(1) = TABLE_Z + (0.1 * indx);
-		stonePos(0) = -0.5;
-	}
-
+	stonePos(0) = 0.0;
+	stonePos(1) = 0.5;
 }
 
 void stone::ApplyImpulse(vec2 imp) {
@@ -143,13 +136,13 @@ void stone::HitPlane(const edge& e) {
 	vec2 delta = -(e.normal * comp);
 	velocity += delta;
 
-	//make some particles
+	// Make some particles
 	int n = (rand() % 4) + 3;
 	vec3 pos(stonePos(0), radius / 2.0, stonePos(1));
 	vec3 oset(e.normal(0), 0.0, e.normal(1));
 	pos += (oset * radius);
 	for (int i = 0; i < n; i++) {
-		gCurlingSheet.parts.AddParticle(pos);
+		// parts.AddParticle(pos);
 	}
 }
 
@@ -181,7 +174,7 @@ void stone::HitStone(stone& s) {
 	vec3 oset(relDir(0), 0.0, relDir(1));
 	pos += (oset * radius);
 	for (int i = 0; i < randNumParts; i++) {
-		gCurlingSheet.parts.AddParticle(pos);
+		// parts.AddParticle(pos);
 	}
 }
 
@@ -229,7 +222,8 @@ void particleSet::update(int ms) {
 			particles[i] = particles[num - 1];
 			num--;
 		}
-		else i++;
+		else 
+			i++;
 	}
 }
 
@@ -258,6 +252,7 @@ std::map<team, std::vector<int>> curlingSheet::actvPlayers = {};
 curlingSheet::curlingSheet(int sheetNum) {
 	sheetPos = pow(-1.5, float(sheetNum)) * ceil(float(sheetNum) / 2);
 	SetUpEdges();
+	SetUpTableFeatures();
 }
 
 void curlingSheet::SetUpEdges(void) {
@@ -308,18 +303,23 @@ void curlingSheet::SetUpEdges(void) {
 	}
 }
 
-void curlingSheet::SetUpRings(void) {
-	int scoreCenter;
-	for (int i = 0; i < NUM_RINGS; i++) {
-		rings[i].targetCenter(0) = 0;
-		float zLoc = (TABLE_X * 2) - (TARGET_SPACING * NUM_RINGS);
-		rings[i].targetCenter(1) = zLoc - TABLE_Z;
-	}
+void curlingSheet::SetUpTableFeatures(void) {
+	// Hog-Line Set up
+	tableFeatures[0] = new lines(vec2(sheetPos * yAxisScale * 3 - yAxisScale, -12 * SCALE_FACTOR), vec2(sheetPos * yAxisScale * 3 + yAxisScale, -12 * SCALE_FACTOR));
+	hogLine = -12 * SCALE_FACTOR;
+	// // Hack-Line Set up
+	tableFeatures[1] = new lines(vec2(sheetPos * yAxisScale * 3 - yAxisScale, -17 * SCALE_FACTOR), vec2(sheetPos * yAxisScale * 3 + yAxisScale, -17 * SCALE_FACTOR));
+	hackLine = -17 * SCALE_FACTOR;
+
+	scoreCenter = vec2(sheetPos * yAxisScale * 3, -15 * SCALE_FACTOR);
+	tableFeatures[2] = new rings(vec2(sheetPos * yAxisScale * 3, -15 * SCALE_FACTOR), SCALE_FACTOR / 10);
+	tableFeatures[3] = new rings(vec2(sheetPos * yAxisScale * 3, -15 * SCALE_FACTOR), SCALE_FACTOR / 3);
+	tableFeatures[4] = new rings(vec2(sheetPos * yAxisScale * 3, -15 * SCALE_FACTOR), (2 * SCALE_FACTOR) / 3);
+	tableFeatures[5] = new rings(vec2(sheetPos * yAxisScale * 3, -15 * SCALE_FACTOR), SCALE_FACTOR);
 }
 
 
 void curlingSheet::Update(int ms) {
-
 	// Checks for collisions for each stone
 	for (int i = 0; i < NUM_STONES; i++) {
 		/*for (int j = (i + 1); j < NUM_RINGS; j++) {
@@ -348,6 +348,19 @@ bool curlingSheet::AnyStonesMoving(void) const {
 	return false;
 }
 
+void curlingSheet::CheckStones(void) {
+	for (int i = stoneCnt - 1; i >= 0; i--) {
+		if (stones[i].stonePos(1) > hogLine) {
+			stones.erase(stones.begin() + i);
+			stoneCnt--;
+		}
+		else if (stones[i].stonePos(1) < hackLine) {
+			stones.erase(stones.begin() + i);
+			stoneCnt--;
+		}
+	}
+}
+
 template<typename T>
 void pop_front(std::vector<T>& vec) {
 	assert(!vec.empty());
@@ -373,13 +386,13 @@ void curlingSheet::SetPlayer(team _team) {
 
 int curlingSheet::GetScores(void) {
 	std::map<team, std::vector<float>> scoreDict;
-	int returnValue = 0;
+	int rtrnVal = 0;
 	for (int i = 0; i < stoneCnt; i++) {
 		float score = sqrt(pow((scoreCenter(0) - stones[i].stonePos(0)), 2) + pow((scoreCenter(1) - stones[i].stonePos(1)), 2));
 		scoreDict[stones[i].stoneTeam].push_back(score);
-		if (sqrt(score) < 0.5) returnValue++;
+		if (sqrt(score) < SCALE_FACTOR) rtrnVal++;
 	}
-	return returnValue;
+	return rtrnVal;
 }
 
 void curlingSheet::SetUpOrder(void) {
@@ -413,4 +426,14 @@ void curlingSheet::RemovePlayer(team _team, int _player) {
 			actvPlayers[_team].erase(actvPlayers[_team].begin() + i);
 		}
 	}
+}
+
+lines::lines(vec2 vertex1, vec2 vertex2) {
+	vertices[0] = vertex1;
+	vertices[1] = vertex2;
+}
+
+rings::rings(vec2 tCenter, float tRrad) {
+	targetCenter= tCenter;
+	targetRad = tRrad;
 }

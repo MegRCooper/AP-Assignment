@@ -4,7 +4,7 @@
 #include <string>
 
 class player {
-	static int IDcount;
+	static int IDCount;
 private:
 	int ID;
 public:

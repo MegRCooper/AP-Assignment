@@ -22,6 +22,7 @@
 #define MAX_PARTICLES	(150)
 #define MAX_PLAYERS		(4)
 #define MIN_PLAYERS		(2)
+#define TABLE_FEATURES	(6)
 #define TABLE_NUM		(5)
 
 /**
@@ -61,7 +62,7 @@ public:
 /**
 	TARGET CLASS:
 		 The code attempts to create a vector2 object with the center of the target and its radius.
-**/
+
 class target {
 	static int targetIndxCnt;
 public:
@@ -71,8 +72,7 @@ public:
 		targetCenter = 0;
 		targetRad = TARGET_SPACING;
 	}
-};
-
+}; **/
 
 /**
 	STONE CLASS:
@@ -167,6 +167,38 @@ public:
 };
 
 /**
+	TABLE FEATURES CLASS:
+	Declares two classes, lines and rings.
+	First one is a subclass of the second one, which means that it inherits all of its methods and properties from tableFeatures
+	The code defines three methods for each class:
+		featureType() returns an integer value that indicates what type of object this is;
+		vertices returns a vector2 array with 2 elements (x, y);
+		targetCenter stores the center point of the object's bounding box in 3D space;
+		targetRad stores the radius of the object's bounding box in 3D space.
+	Lines inherits from tableFeatures which means it has the featureType() function return 0.
+	Rings inherits from tableFeatures which means it has the featureType() function return 1.
+**/
+class tableFeatures {
+public:
+	// Uses a dynamic cast a polymorphic func 
+	virtual int featureType() = 0;
+};
+
+class lines : public tableFeatures {
+	vec2 vertices[2];
+	lines(vec2, vec2);
+	int tableFeatures() { return 0; };
+};
+
+class rings : public tableFeatures {
+public:
+	vec2 targetCenter;
+	float targetRad;
+	rings(vec2, float);
+	int tableFeatures() { return 1; };
+};
+
+/**
 	CURLING SHEET CLASS:
 		Defines three variables stones, edges, rings
 	The SetUpEdges() function is called first [Sets up the edges of the game board] - creates an array of integers called edges
@@ -178,16 +210,20 @@ public:
 	The AnyStonesMoving() function will be used to check if any of the stones, edges, target rings or particles are moving.
 **/
 class curlingSheet {
-	static std::map<team, std::vector<int>> actvPlayers; // Map of active players to prevent duplication
+	// Map of active players to prevent duplication
+	static std::map<team, std::vector<int>> actvPlayers; 
 private:
-	float tabScale = SCALE_FACTOR;
+	float tableScale = SCALE_FACTOR;
 	int sheetPos;
 public:
 	edge edges[NUM_EDGES];
-	target rings[NUM_RINGS];
+	tableFeatures* tableFeatures[TABLE_FEATURES];
 	particleSet parts;
+	//target rings[NUM_RINGS];
+	
 
 	float yAxisScale = 0.7;
+	float hogLine, hackLine;
 	int stoneCnt = 0;
 	vec2 scoreCenter;
 	bool doAim;
@@ -199,10 +235,11 @@ public:
 	
 	curlingSheet(int);
 	void SetUpEdges(void);
-	void SetUpRings(void);
+	void SetUpTableFeatures(void);
 	void Update(int ms);
 	bool AnyStonesMoving(void) const;
 	void AddStone(void);
+	void CheckStones(void);
 	int  GetScores(void);
 	void SetUpOrder(void);
 	void SetPlayer(team);

@@ -2,10 +2,12 @@
 
 #include "stdafx.h"
 #include "stdafx.h"
+#include "simulation.h"
 #include <glut.h>
 #include <math.h>
+#include <iostream>
 #include <thread>
-#include "simulation.h"
+
 
 // Aim Line variables:
 float gAimAngle = 0.0;
@@ -36,7 +38,7 @@ player* locPlayer;
 team _team;
 
 // Rendering Options:
-#define DRAW_SOLID	(0)
+#define DRAW_SOLID	(1)
 
 /**
 	VOID DOCAMERA:
@@ -142,6 +144,25 @@ void DoCamera(int ms) {
 	}
 }
 
+void CamSetLoc(vec3 _position, vec3 _lookat) {
+	gCamPos = _position;
+	gCamLookAt = _lookat;
+}
+
+void DrawCircle(float cx, float cy, float r, int numSegs) {
+	glBegin(GL_LINE_LOOP);
+	for (int seg = 0; seg < numSegs; seg++) {
+		// Get the current angle
+		float theta = 2.0f * 3.1415926f * float(seg) / float(numSegs);
+
+		float x = r * cosf(theta); //Calc the X-component
+		float y = r * sinf(theta); //Calc the Y-component
+
+		glVertex3f(x + cx, 0.0, y + cy); // Outpt vertex
+	}
+	glEnd();
+}
+
 int RenderTable(size_t tab) {
 	for (int i = 0; i < tables[tab].stoneCnt; i++) {
 		glDisable(GL_LIGHTING);
@@ -155,9 +176,31 @@ int RenderTable(size_t tab) {
 		glutWireSphere(tables[tab].stones[i].radius, 12, 12);
 #endif
 		glPopMatrix();
-		glColor3f(0.0, 0.0, 1.0);
+		glColor3f(1.0, 0.0, 0.0);
 	}
-	glColor3f(1.0, 1.0, 1.0);
+	glColor3f(0.0, 1.0, 0.0);
+
+	// Draw the table
+	for (int i = 0; i < NUM_EDGES; i++) {
+		glBegin(GL_LINE_LOOP);
+		glVertex3f(tables[tab].edges[i].vertices[0](0), 0.0, tables[tab].edges[i].vertices[0](1));
+		glVertex3f(tables[tab].edges[i].vertices[0](0), 0.1, tables[tab].edges[i].vertices[0](1));
+		glVertex3f(tables[tab].edges[i].vertices[1](0), 0.1, tables[tab].edges[i].vertices[1](1));
+		glVertex3f(tables[tab].edges[i].vertices[1](0), 0.0, tables[tab].edges[i].vertices[1](1));
+		glEnd();
+	}
+
+	for (int i = 0; i < TABLE_FEATURES; i++) {
+		if (lines* x = dynamic_cast<lines*>(tables[tab].tableFeatures[i])) {
+			glBegin(GL_LINE_LOOP);
+			glVertex3f(x->vertices[0](0), 0.0, x->vertices[0](1));
+			glVertex3f(x->vertices[1](0), 0.0, x->vertices[1](1));
+			glEnd();
+		}
+		else if (rings* x = dynamic_cast<rings*>(tables[tab].tableFeatures[i])) {
+			DrawCircle(x->targetCenter(0), x->targetCenter(1), x->targetRad, 30);
+		}
+	}
 
 	for (int i = 0; i < tables[tab].parts.num; i++) {
 		glColor3f(1.0, 0.0, 0.0);
@@ -170,7 +213,6 @@ int RenderTable(size_t tab) {
 #endif
 		glPopMatrix();
 	}
-
 	return(0);
 }
 
@@ -216,42 +258,44 @@ void RenderScene(void) {
 	gluLookAt(gCamPos(0), gCamPos(1), gCamPos(2), gCamLookAt(0), gCamLookAt(1), gCamLookAt(2), 0.0f, 1.0f, 0.0f);
 
 	// Draws the stone - THIS NEEDS CHANGING OF THE SHAPE AS THESE ARE SPHERICAL 
-	for (int i = 0; i < NUM_STONES; i++) {
-		glColor3f(0.0, 0.0, 1.0);
-		glPushMatrix();
-		glTranslatef(gCurlingSheet.stones[i].stonePos(0), (STONE_RADIUS / 2.0), gCurlingSheet.stones[i].stonePos(1));
-		glutSolidSphere(gCurlingSheet.stones[i].radius, 12, 12);
-		glPopMatrix();
-	}
+	//for (int i = 0; i < NUM_STONES; i++) {
+	//	glColor3f(0.0, 0.0, 1.0);
+	//	glPushMatrix();
+	//	glTranslatef(gCurlingSheet.stones[i].stonePos(0), (STONE_RADIUS / 2.0), gCurlingSheet.stones[i].stonePos(1));
+	//	glutSolidSphere(gCurlingSheet.stones[i].radius, 12, 12);
+	//	glPopMatrix();
+	//}
+
+	glColor3f(1.0,1.0,1.0);
 
 	for (size_t tab = 0; tab < tables.size(); tab++) {
 		RenderTable(tab);
 	}
 
-	//Draw the curling Sheet
-	glColor3f(0.0f, 0.5f, 0.5f);
-	for (int i = 0; i < NUM_EDGES; i++) {
-		glBegin(GL_LINE_LOOP);
-		glVertex3f(gCurlingSheet.edges[i].vertices[0](0), 0.0, gCurlingSheet.edges[i].vertices[0](1));
-		glVertex3f(gCurlingSheet.edges[i].vertices[0](0), 0.1, gCurlingSheet.edges[i].vertices[0](1));
-		glVertex3f(gCurlingSheet.edges[i].vertices[1](0), 0.1, gCurlingSheet.edges[i].vertices[1](1));
-		glVertex3f(gCurlingSheet.edges[i].vertices[1](0), 0.0, gCurlingSheet.edges[i].vertices[1](1));
-		glEnd();
-	}
+	////Draw the curling Sheet
+	//glColor3f(0.0f, 0.5f, 0.5f);
+	//for (int i = 0; i < NUM_EDGES; i++) {
+	//	glBegin(GL_LINE_LOOP);
+	//	glVertex3f(gCurlingSheet.edges[i].vertices[0](0), 0.0, gCurlingSheet.edges[i].vertices[0](1));
+	//	glVertex3f(gCurlingSheet.edges[i].vertices[0](0), 0.1, gCurlingSheet.edges[i].vertices[0](1));
+	//	glVertex3f(gCurlingSheet.edges[i].vertices[1](0), 0.1, gCurlingSheet.edges[i].vertices[1](1));
+	//	glVertex3f(gCurlingSheet.edges[i].vertices[1](0), 0.0, gCurlingSheet.edges[i].vertices[1](1));
+	//	glEnd();
+	//}
 
-	//Draw the Target.
-	for (int i = 0; i < NUM_RINGS; i++) {
-		glPushMatrix();
-		if (i % 2 == 0) { glColor3f(1.0, 1.0, 1.0); } // White Rings 
-		else { glColor3f(1.0, 0.0, 0.0); } // Red Rings 
-		GLUquadric* quadric;
-		quadric = gluNewQuadric();
-		glTranslatef(gCurlingSheet.rings[i].targetCenter(0), (-0.001 * i), gCurlingSheet.rings[i].targetCenter(1));
-		glRotatef(9 * 10, 1.0f, 0.0f, 0.0f);
-		gluDisk(quadric, 0, TARGET_SPACING * i, 15, 15);
-		gluDeleteQuadric(quadric);
-		glPopMatrix();
-	}
+	////Draw the Target.
+	//for (int i = 0; i < NUM_RINGS; i++) {
+	//	glPushMatrix();
+	//	if (i % 2 == 0) { glColor3f(1.0, 1.0, 1.0); } // White Rings 
+	//	else { glColor3f(1.0, 0.0, 0.0); } // Red Rings 
+	//	GLUquadric* quadric;
+	//	quadric = gluNewQuadric();
+	//	glTranslatef(gCurlingSheet.rings[i].targetCenter(0), (-0.001 * i), gCurlingSheet.rings[i].targetCenter(1));
+	//	glRotatef(9 * 10, 1.0f, 0.0f, 0.0f);
+	//	gluDisk(quadric, 0, TARGET_SPACING * i, 15, 15);
+	//	gluDeleteQuadric(quadric);
+	//	glPopMatrix();
+	//}
 
 	// Draw the Aiming Line
 	/**
@@ -277,6 +321,8 @@ void RenderScene(void) {
 		glColor3f(1.0, 1.0, 1.0);
 		glEnd();
 	}
+	glFlush();
+	glutSwapBuffers();
 }
 
 
@@ -336,12 +382,10 @@ void KeyboardFunc(unsigned char key, int x, int y) {
 	switch (key) {
 	case(13):
 	{
-		if (gDoAim) {
-			vec2 imp((-sin(gAimAngle) * gAimPower * gPlayerStoneFactor),
-				(-cos(gAimAngle) * gAimPower * gPlayerStoneFactor));
-			gCurlingSheet.stones[gCurlingSheet.stoneCnt].ApplyImpulse(imp);
-			gCurlingSheet.stoneCnt++;
-
+		if (locPlayer->doAim){
+			vec2 imp((-sin(gAimAngle) * gAimPower * gPlayerStoneFactor),(-cos(gAimAngle) * gAimPower * gPlayerStoneFactor));
+			tables[0].stones[tables[0].stoneCnt - 1].ApplyImpulse(imp);
+			locPlayer->doAim = false;
 		}
 		break;
 	}
@@ -468,24 +512,38 @@ void InitLights(void) {
 }
 
 void UpdateScene(int ms) {
-	if (gCurlingSheet.AnyStonesMoving() == false) { 
-		gDoAim = true; 
-		gCurlingSheet.stones[gCurlingSheet.stoneCnt].stonePos(0) = 0;
-		gCurlingSheet.stones[gCurlingSheet.stoneCnt].stonePos(1) = TABLE_Z - 0.25;
+	int TestVar = tables.size();
+	for (size_t tab = 0; tab < tables.size(); tab++) {
+		if (tables[tab].AnyStoneMoving() == false) {
+			if (tables[tab].doAim == false) {
+				tables[tab].CheckStones();
+				tables[tab].AddStone();
+			}
+			tables[tab].doAim = true;
+			CamSetLoc(vec3(0.0, 10, 2.1), vec3(0.0, 0.0, -3.0));
+		}
+		else {
+			tables[tab].doAim = false;
+			CamSetLoc(vec3(0.0, 5, -15 * SCALE_FACTOR), vec3(0.0, 0.0, -7));
+		}
+
+		tables[tab].Update(ms);
 	}
-	else gDoAim = false;
-	if (gDoAim) {
+
+	if (locPlayer->doAim) {
 		if (gAimControl[0]) gAimAngle -= ((gAimAngleSpeed * ms) / 1000);
 		if (gAimControl[1]) gAimAngle += ((gAimAngleSpeed * ms) / 1000);
 		if (gAimAngle < 0.0) gAimAngle += TWO_PI;
 		if (gAimAngle > TWO_PI) gAimAngle -= TWO_PI;
+
 		if (gAimControl[2]) gAimPower += ((gAimPowerSpeed * ms) / 1000);
 		if (gAimControl[3]) gAimPower -= ((gAimPowerSpeed * ms) / 1000);
-		if (gAimPower > gAimPowerMax) gAimPower = gAimPowerMax;
+		if (gAimControl > gAimPowerMax) gAimPower = gAimPowerMax;
 		if (gAimPower < gAimPowerMin) gAimPower = gAimPowerMin;
 	}
+
 	DoCamera(ms);
-	gCurlingSheet.Update(ms);
+
 	glutTimerFunc(SIM_UPDATE_MS, UpdateScene, SIM_UPDATE_MS);
 	glutPostRedisplay();
 }

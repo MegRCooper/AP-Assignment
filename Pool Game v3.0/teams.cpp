@@ -1,11 +1,11 @@
 #include "teams.h"
 
-int player::IDcount = 0;
+int player::IDCount = 0;
 
 player::player() {
-	ID = IDcount;
-	IDcount++;
-	doCue = false;
+	ID = IDCount;
+	IDCount++;
+	doAim = false;
 	name = "COO19695119";
 }
 
