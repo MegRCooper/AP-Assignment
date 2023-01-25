@@ -98,10 +98,12 @@
     <ClCompile Include="stdafx.cpp">
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">glut-3.7.6-bin;%</AdditionalIncludeDirectories>
     </ClCompile>
+    <ClCompile Include="teams.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="glui-2.36\src\include\GL\glui.h" />
     <ClInclude Include="glut-3.7.6-bin\glut.h" />
+    <ClInclude Include="teams.h" />
     <ClInclude Include="networkServer.h" />
     <ClInclude Include="simulation.h" />
     <ClInclude Include="stdafx.h" />

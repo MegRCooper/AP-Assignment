@@ -3,15 +3,12 @@
 #include "simulation.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include<iostream>
-#include<fstream>
-#include<sstream>
 
 // MACROS:
 #define SMALL_VEL (0.01f)
 
 // GLOBALS:
-curlingSheet gCurlingSheet;
+// curlingSheet gCurlingSheet;
 
 float gCoeffRestitution = 0.5f;
 float gCoeffFriction = 0.03f;
@@ -53,6 +50,13 @@ void edge::MakeCentre(void) {
 **/
 
 int stone::stoneIndxCnt = 0;
+
+stone::stone(team _team) : stonePos(0.0), velocity(0.0), radius(STONE_RADIUS), mass(STONE_MASS) {
+	indx = stoneIndxCnt++;
+	stoneTeam = _team;
+	Reset();
+}
+
 void stone::Reset(void) {
 	// Set velocity to Zero.
 	velocity = 0.0;
@@ -96,10 +100,6 @@ void stone::DoPlaneCollision(const edge& e) {
 		HitPlane(e);
 }
 
-void stone::DoTargetCollision(target& t) {
-	
-}
-
 void stone::Update(int ms) {
 	// Applying Friction:
 	ApplyFrictionForce(ms);
@@ -110,8 +110,6 @@ void stone::Update(int ms) {
 }
 
 bool stone::HasHitPlane(const edge& e) const {
-	if (tTarget != NULL)
-		return false;
 	// If moving away from plane, cannot hit.
 	if (velocity.Dot(e.normal) >= 0.0)
 		return false;
@@ -123,26 +121,13 @@ bool stone::HasHitPlane(const edge& e) const {
 	return true;
 }
 
-//NOT SURE THIS IS NEEDED AS IT IS FROM THE OG CODE - decide if required and adjust as needed!!
-bool stone::HasHitTarget(const target& t) const {
-	// work out relative position of stone from target,	distance between stone and target and relative velocity
-	vec2 relPosn = stonePos - t.targetCenter;
-	float dist = (float)relPosn.Magnitude();
-	vec2 relPosnNorm = relPosn.Normalised();
-
-	//if moving away from plane, cannot hit
-	if (velocity.Dot(relPosnNorm) >= 0.0) return false;
-	//if distnce is more than sum of radi, have not hit
-	if (dist > (radius + t.targetRad)) return false;
-	return true;
-}
-
 bool stone::HasHitStone(const stone& s) const {
 	// Works out the relative pos od stone from other stones, distance between stones and relative velocity
 	vec2 relPos = stonePos - s.stonePos;
 	float dist = (float)relPos.Magnitude();
 	vec2 relPosNorm = relPos.Normalised();
 	vec2 relVel = velocity - s.velocity;
+
 	// Moving apart cannot hit:
 	if (relVel.Dot(relPosNorm) >= 0.0)
 		return false;
@@ -157,9 +142,16 @@ void stone::HitPlane(const edge& e) {
 	double comp = velocity.Dot(e.normal) * (1.0 + gCoeffRestitution);
 	vec2 delta = -(e.normal * comp);
 	velocity += delta;
+
+	//make some particles
+	int n = (rand() % 4) + 3;
+	vec3 pos(stonePos(0), radius / 2.0, stonePos(1));
+	vec3 oset(e.normal(0), 0.0, e.normal(1));
+	pos += (oset * radius);
+	for (int i = 0; i < n; i++) {
+		gCurlingSheet.parts.AddParticle(pos);
+	}
 }
-
-
 
 void stone::HitStone(stone& s) {
 	// Find direction from other stone to this stone
@@ -191,10 +183,6 @@ void stone::HitStone(stone& s) {
 	for (int i = 0; i < randNumParts; i++) {
 		gCurlingSheet.parts.AddParticle(pos);
 	}
-}
-
-void stone::SetPlayerStone() {
-	isPlayerStone = true;
 }
 
 /**
@@ -265,7 +253,15 @@ void particleSet::update(int ms) {
 		ADD TO WITH A FINISHED DEFINITIONS
 **/
 
+std::map<team, std::vector<int>> curlingSheet::actvPlayers = {};
+
+curlingSheet::curlingSheet(int sheetNum) {
+	sheetPos = pow(-1.5, float(sheetNum)) * ceil(float(sheetNum) / 2);
+	SetUpEdges();
+}
+
 void curlingSheet::SetUpEdges(void) {
+	/**
 	edges[0].vertices[0](0) = -TABLE_X;
 	edges[0].vertices[0](1) = -TABLE_Z;
 	edges[0].vertices[1](0) = -TABLE_X;
@@ -284,7 +280,27 @@ void curlingSheet::SetUpEdges(void) {
 	edges[3].vertices[0](0) = TABLE_X;
 	edges[3].vertices[0](1) = -TABLE_Z;
 	edges[3].vertices[1](0) = -TABLE_X;
-	edges[3].vertices[1](1) = -TABLE_Z;
+	edges[3].vertices[1](1) = -TABLE_Z; **/
+
+	edges[0].vertices[0](0) = sheetPos * yAxisScale * 4 - yAxisScale;
+	edges[0].vertices[0](1) = -20 * SCALE_FACTOR;
+	edges[0].vertices[1](0) = sheetPos * yAxisScale * 4 - yAxisScale;
+	edges[0].vertices[1](1) = 4 * SCALE_FACTOR;
+
+	edges[0].vertices[0](0) = sheetPos * yAxisScale * 4 - yAxisScale;
+	edges[0].vertices[0](1) = 4 * SCALE_FACTOR;
+	edges[0].vertices[1](0) = sheetPos * yAxisScale * 4 + yAxisScale;
+	edges[0].vertices[1](1) = 4 * SCALE_FACTOR;
+
+	edges[0].vertices[0](0) = sheetPos * yAxisScale * 4 + yAxisScale;
+	edges[0].vertices[0](1) = 2 * SCALE_FACTOR;
+	edges[0].vertices[1](0) = sheetPos * yAxisScale * 4 + yAxisScale;
+	edges[0].vertices[1](1) = -20 * SCALE_FACTOR;
+
+	edges[0].vertices[0](0) = sheetPos * yAxisScale * 4 + yAxisScale;
+	edges[0].vertices[0](1) = -20 * SCALE_FACTOR;
+	edges[0].vertices[1](0) = sheetPos * yAxisScale * 4 - yAxisScale;
+	edges[0].vertices[1](1) = -20 * SCALE_FACTOR;
 
 	for (int i = 0; i < NUM_EDGES; i++) {
 		edges[i].MakeCentre();
@@ -293,6 +309,7 @@ void curlingSheet::SetUpEdges(void) {
 }
 
 void curlingSheet::SetUpRings(void) {
+	int scoreCenter;
 	for (int i = 0; i < NUM_RINGS; i++) {
 		rings[i].targetCenter(0) = 0;
 		float zLoc = (TABLE_X * 2) - (TARGET_SPACING * NUM_RINGS);
@@ -305,9 +322,9 @@ void curlingSheet::Update(int ms) {
 
 	// Checks for collisions for each stone
 	for (int i = 0; i < NUM_STONES; i++) {
-		for (int j = (i + 1); j < NUM_RINGS; j++) {
+		/*for (int j = (i + 1); j < NUM_RINGS; j++) {
 			stones[i].DoTargetCollision(rings[j]);
-		}
+		}*/
 		for (int j = 0; j < NUM_EDGES; j++) {
 			stones[i].DoPlaneCollision(edges[j]);
 		}
@@ -317,6 +334,9 @@ void curlingSheet::Update(int ms) {
 	}
 	// Update all stones:
 	for (int i = 0; i < NUM_STONES; i++) stones[i].Update(ms);
+
+	// Update Particles:
+	parts.update(ms);
 }
 
 bool curlingSheet::AnyStonesMoving(void) const {
@@ -326,4 +346,71 @@ bool curlingSheet::AnyStonesMoving(void) const {
 		if (stones[i].velocity(1) != 0.0) return true;
 	}
 	return false;
+}
+
+template<typename T>
+void pop_front(std::vector<T>& vec) {
+	assert(!vec.empty());
+	vec.erase(vec.begin());
+}
+
+void curlingSheet::AddStone(void) {
+	if (stoneOrder.size() > 0) {
+		stones.push_back(stone(stoneOrder[0]));
+		pop_front(stoneOrder);
+		stones[stones.size() - 1].stonePos(0) = sheetPos * yAxisScale * 3;
+		stoneCnt += 1;
+	}
+}
+
+void curlingSheet::SetPlayer(team _team) {
+	teamIt[_team]++;
+	if (teamIt[_team] >= teams[_team].size()) {
+		teamIt[_team] = 0;
+	}
+	_team.players[teams[_team][teamIt[_team]]]->doAim = true;
+}
+
+int curlingSheet::GetScores(void) {
+	std::map<team, std::vector<float>> scoreDict;
+	int returnValue = 0;
+	for (int i = 0; i < stoneCnt; i++) {
+		float score = sqrt(pow((scoreCenter(0) - stones[i].stonePos(0)), 2) + pow((scoreCenter(1) - stones[i].stonePos(1)), 2));
+		scoreDict[stones[i].stoneTeam].push_back(score);
+		if (sqrt(score) < 0.5) returnValue++;
+	}
+	return returnValue;
+}
+
+void curlingSheet::SetUpOrder(void) {
+	if (teams.size() >= 2) {
+		stoneOrder.clear();
+		for (int i = 0; i < 4; i++) {
+			auto iterator = teams.begin();
+			stoneOrder.push_back(iterator->first);
+			stoneOrder.push_back(iterator->first);
+			iterator++;
+			stoneOrder.push_back(iterator->first);
+			stoneOrder.push_back(iterator->first);
+		}
+	}
+}
+
+void curlingSheet::AddPlayer(team _team, int _player) {
+	teams[_team].push_back(_player);
+	actvPlayers[_team].push_back(_player);
+}
+
+void curlingSheet::RemovePlayer(team _team, int _player) {
+	for (int i = actvPlayers.size() - 1; i >= 0; i--) {
+		if (teams[_team][i] == _player) {
+			teams[_team].erase(teams[_team].begin() + i);
+		}
+	}
+
+	for (int i = actvPlayers.size() - 1; i >= 0; i--) {
+		if (actvPlayers[_team][i] == _player) {
+			actvPlayers[_team].erase(actvPlayers[_team].begin() + i);
+		}
+	}
 }

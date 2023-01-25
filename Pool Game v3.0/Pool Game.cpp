@@ -1,10 +1,11 @@
+// Pool Game.cpp: Defines the entry point for the console app, while it's called Pool.cpp its a Curling Game.
+
 #include "stdafx.h"
 #include "stdafx.h"
 #include <glut.h>
 #include <math.h>
 #include <thread>
 #include "simulation.h"
-#include "player.h"
 
 // Aim Line variables:
 float gAimAngle = 0.0;
@@ -29,6 +30,10 @@ bool gCamU = false;
 bool gCamD = false;
 bool gCamZin = false;
 bool gCamZout = false;
+
+std::vector<curlingSheet> tables;
+player* locPlayer;
+team _team;
 
 // Rendering Options:
 #define DRAW_SOLID	(0)
@@ -137,6 +142,38 @@ void DoCamera(int ms) {
 	}
 }
 
+int RenderTable(size_t tab) {
+	for (int i = 0; i < tables[tab].stoneCnt; i++) {
+		glDisable(GL_LIGHTING);
+		glColor3f(tables[tab].stones[i].stoneTeam.colour(0), tables[tab].stones[i].stoneTeam.colour(1), tables[tab].stones[i].stoneTeam.colour(2));
+		glPushMatrix();
+		glTranslatef(tables[tab].stones[i].stonePos(0), (STONE_RADIUS / 2.0), tables[tab].stones[i].stonePos(1));
+		glScalef(1.0, 0.3, 1.0);
+#if DRAW_SOLID
+		glutSolidSphere(tables[tab].stones[i].radius, 32, 32);
+#else
+		glutWireSphere(tables[tab].stones[i].radius, 12, 12);
+#endif
+		glPopMatrix();
+		glColor3f(0.0, 0.0, 1.0);
+	}
+	glColor3f(1.0, 1.0, 1.0);
+
+	for (int i = 0; i < tables[tab].parts.num; i++) {
+		glColor3f(1.0, 0.0, 0.0);
+		glPushMatrix();
+		glTranslatef(tables[tab].parts.particles[i]->partPos(0), tables[tab].parts.particles[i]->partPos(1), tables[tab].parts.particles[i]->partPos(2));
+#if DRAW_SOLID
+		glutSolidSphere(0.002f, 32, 32);
+#else
+		glutWireSphere(0.002f, 12, 12);
+#endif
+		glPopMatrix();
+	}
+
+	return(0);
+}
+
 /**
 	RENDERSCENE(VOID)
 	Drawing of the stones:
@@ -180,12 +217,15 @@ void RenderScene(void) {
 
 	// Draws the stone - THIS NEEDS CHANGING OF THE SHAPE AS THESE ARE SPHERICAL 
 	for (int i = 0; i < NUM_STONES; i++) {
-
 		glColor3f(0.0, 0.0, 1.0);
 		glPushMatrix();
 		glTranslatef(gCurlingSheet.stones[i].stonePos(0), (STONE_RADIUS / 2.0), gCurlingSheet.stones[i].stonePos(1));
 		glutSolidSphere(gCurlingSheet.stones[i].radius, 12, 12);
 		glPopMatrix();
+	}
+
+	for (size_t tab = 0; tab < tables.size(); tab++) {
+		RenderTable(tab);
 	}
 
 	//Draw the curling Sheet
@@ -214,6 +254,7 @@ void RenderScene(void) {
 	}
 
 	// Draw the Aiming Line
+	/**
 	if (gDoAim) {
 		glBegin(GL_LINES);
 		float cuex = sin(gAimAngle) * gAimPower;
@@ -224,7 +265,18 @@ void RenderScene(void) {
 		glEnd();
 	}
 	glFlush();
-	glutSwapBuffers();
+	glutSwapBuffers(); **/
+
+	if (locPlayer->doAim) {
+		glBegin(GL_LINES);
+		float cuex = sin(gAimAngle) * gAimPower;
+		float cuez = cos(gAimAngle) * gAimPower;
+		glColor3f(1.0, 0.0, 0.0);
+		glVertex3f(tables[0].stones[tables[0].stoneCnt - 1].stonePos(0), (STONE_RADIUS / 2.0f), tables[0].stones[tables[0].stoneCnt - 1].stonePos(1));
+		glVertex3f((tables[0].stones[tables[0].stoneCnt - 1].stonePos(0) + cuex), (STONE_RADIUS / 2.0f), (tables[0].stones[tables[0].stoneCnt - 1].stonePos(1) + cuez));
+		glColor3f(1.0, 1.0, 1.0);
+		glEnd();
+	}
 }
 
 
@@ -287,8 +339,8 @@ void KeyboardFunc(unsigned char key, int x, int y) {
 		if (gDoAim) {
 			vec2 imp((-sin(gAimAngle) * gAimPower * gPlayerStoneFactor),
 				(-cos(gAimAngle) * gAimPower * gPlayerStoneFactor));
-			gCurlingSheet.stones[gCurlingSheet.currntStone].ApplyImpulse(imp);
-			gCurlingSheet.currntStone++;
+			gCurlingSheet.stones[gCurlingSheet.stoneCnt].ApplyImpulse(imp);
+			gCurlingSheet.stoneCnt++;
 
 		}
 		break;
@@ -418,8 +470,8 @@ void InitLights(void) {
 void UpdateScene(int ms) {
 	if (gCurlingSheet.AnyStonesMoving() == false) { 
 		gDoAim = true; 
-		gCurlingSheet.stones[gCurlingSheet.currntStone].stonePos(0) = 0;
-		gCurlingSheet.stones[gCurlingSheet.currntStone].stonePos(1) = TABLE_Z - 0.25;
+		gCurlingSheet.stones[gCurlingSheet.stoneCnt].stonePos(0) = 0;
+		gCurlingSheet.stones[gCurlingSheet.stoneCnt].stonePos(1) = TABLE_Z - 0.25;
 	}
 	else gDoAim = false;
 	if (gDoAim) {
@@ -439,9 +491,9 @@ void UpdateScene(int ms) {
 }
 
 int _tmain(int argc, _TCHAR* argv[]) {
-	gCurlingSheet.SetUpEdges();
-	gCurlingSheet.SetUpRings();
-	gCurlingSheet.stones[0].SetPlayerStone();
+	//gCurlingSheet.SetUpEdges();
+	//gCurlingSheet.SetUpRings();
+	//gCurlingSheet.stones[0].SetPlayerStone();
 	glutInit(&argc, ((char**)argv));
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowPosition(0, 0);

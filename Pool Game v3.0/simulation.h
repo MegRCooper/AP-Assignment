@@ -1,11 +1,13 @@
 // Simulation Header File:
 #pragma once
 #include "vecmath.h"
-#include <string>
+#include "teams.h"
 #include <vector>
-#include <random>
+#include <map>
+#include <assert.h>
 
 // Macros - Identifiers that represent statements or expressions:
+#define SCALE_FACTOR	(0.5f)
 #define TABLE_X			(0.25f) 
 #define TABLE_Z			(1.25f)
 #define TABLE_Y			(0.2f)
@@ -20,6 +22,21 @@
 #define MAX_PARTICLES	(150)
 #define MAX_PLAYERS		(4)
 #define MIN_PLAYERS		(2)
+#define TABLE_NUM		(5)
+
+/**
+	NAMESPACE_STD:
+		The code is a template class definition for the less struct.
+		The code defines an operator() function that takes two arguments: teamA and teamB.
+		The code attempts to return true if the team "Team A" is less than the team "Team B"
+**/
+namespace std {
+	template<> struct less<team> {
+		bool operator() (const team& teamA, const team& teamB) const {
+			return teamA.name < teamB.name;
+		}
+	};
+}
 
 /**
 	EDGE CLASS:
@@ -79,52 +96,31 @@ public:
 class stone {
 	static int stoneIndxCnt;
 public:
+	team stoneTeam;
 	vec2 stonePos;
 	vec2 velocity;
 	float radius;
 	float mass;
 	int indx;
-	target* tTarget;
-	bool isPlayerStone;
-
-	stone() : stonePos(0.0), velocity(0.0), radius(STONE_RADIUS), mass(STONE_MASS), tTarget(NULL), isPlayerStone(false) {
+	
+	stone() : stonePos(0.0), velocity(0.0), radius(STONE_RADIUS), mass(STONE_MASS){
 		indx = stoneIndxCnt++;
 		Reset();
 	}
 
+	stone(team);
 	void Reset(void);
 	void ApplyImpulse(vec2 imp);
 	void ApplyFrictionForce(int ms);
 	void DoPlaneCollision(const edge& e);
 	void DoStoneCollision(stone& s);
-	void DoTargetCollision(target& t);
 	void Update(int ms);
 
 	bool HasHitPlane(const edge& e) const;
 	bool HasHitStone(const stone& s) const;
-	bool HasHitTarget(const target& t) const;
-
+	
 	void HitPlane(const edge& e);
 	void HitStone(stone& s);
-
-	void SetPlayerStone(void);
-};
-
-// Player class:
-class player {
-public:
-	std::string name;
-	std::vector<int> scores;
-	bool done;
-	stone stone;
-	bool hadFirstShot;
-	player() {
-		name = "Player " + std::to_string(stone.indx + 1);
-		done = false;
-		hadFirstShot = false;
-	};
-	
-	~player() {};
 };
 
 /**
@@ -182,19 +178,39 @@ public:
 	The AnyStonesMoving() function will be used to check if any of the stones, edges, target rings or particles are moving.
 **/
 class curlingSheet {
+	static std::map<team, std::vector<int>> actvPlayers; // Map of active players to prevent duplication
+private:
+	float tabScale = SCALE_FACTOR;
+	int sheetPos;
 public:
-	stone stones[NUM_STONES];
 	edge edges[NUM_EDGES];
 	target rings[NUM_RINGS];
 	particleSet parts;
-	int currntStone = 0;
+
+	float yAxisScale = 0.7;
+	int stoneCnt = 0;
+	vec2 scoreCenter;
+	bool doAim;
+
+	std::vector<stone> stones;
+	std::map<team, std::vector<int>> teams;
+	std::map<team, int> teamIt;
+	std::vector<team> stoneOrder;
+	
+	curlingSheet(int);
 	void SetUpEdges(void);
 	void SetUpRings(void);
 	void Update(int ms);
 	bool AnyStonesMoving(void) const;
+	void AddStone(void);
+	int  GetScores(void);
+	void SetUpOrder(void);
+	void SetPlayer(team);
+	void AddPlayer(team, int);
+	void RemovePlayer(team, int);
 };
 
 
 // Global curling sheet: 
 // Extern [tells the compiler that a variable is defined in another source module (outside of the current scope)]
-extern curlingSheet gCurlingSheet;
+//extern curlingSheet gCurlingSheet;
