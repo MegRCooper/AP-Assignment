@@ -19,7 +19,7 @@ float gPlayerStoneFactor = 8.0;
 bool gDoAim = true;
 
 // Camera variables:
-vec3 gCamPos(0.0, 0.7, 2.25);
+vec3 gCamPos(0.0, 10.0, 2.1);
 vec3 gCamLookAt(0.0, 0.0, 0.0);
 bool gCamRotate = true;
 float gCamRotSpeed = 0.2;
@@ -171,12 +171,12 @@ int RenderTable(size_t tab) {
 #if DRAW_SOLID
 		glutSolidSphere(sheet[tab].stones[i].radius, 32, 32);
 #else
-		glutWireSphere(tables[tab].stones[i].radius, 12, 12);
+		glutWireSphere(sheet[tab].stones[i].radius, 12, 12);
 #endif
 		glPopMatrix();
-		glColor3f(1.0, 0.0, 0.0);
+		glColor3f(0.0, 0.0, 1.0);
 	}
-	glColor3f(0.0, 1.0, 0.0);
+	glColor3f(1.0, 1.0, 1.0);
 
 	// Draw the table
 	for (int i = 0; i < NUM_EDGES; i++) {
@@ -518,7 +518,7 @@ void UpdateScene(int ms) {
 				sheet[tab].AddStone();
 			}
 			sheet[tab].doAim = true;
-			CamSetLoc(vec3(0.0, 10, 2.0), vec3(0.0, 0.0, -3.0));
+			CamSetLoc(vec3(0.0, 10, 2.1), vec3(0.0, 0.0, -3.0));
 		}
 		else {
 			sheet[tab].doAim = false;

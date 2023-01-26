@@ -8,20 +8,20 @@
 
 // Macros - Identifiers that represent statements or expressions:
 #define SCALE_FACTOR	(0.5f)
-#define TABLE_X			(0.25f) 
-#define TABLE_Z			(1.25f)
-#define TABLE_Y			(0.2f)
+#define TABLE_X			(0.6f) 
+#define TABLE_Z			(1.2f)
+#define TABLE_Y			(0.1f)
 #define STONE_RADIUS	(0.035f)
 #define STONE_MASS		(0.1f)
 #define TWO_PI			(6.2832f)
 #define	SIM_UPDATE_MS	(10)
-#define NUM_STONES		(16) // Needs to be changed.		
+#define NUM_STONES		(16) 		
 #define NUM_EDGES		(4)	
-#define NUM_RINGS		(4)
-#define TARGET_SPACING	(0.065f)
+//#define NUM_RINGS		(4)
+#//define TARGET_SPACING	(0.065f)
 #define MAX_PARTICLES	(150)
-#define MAX_PLAYERS		(4)
-#define MIN_PLAYERS		(2)
+//#define MAX_PLAYERS		(4)
+//#define MIN_PLAYERS		(2)
 #define TABLE_FEATURES	(6)
 #define TABLE_NUM		(5)
 
@@ -33,8 +33,8 @@
 **/
 namespace std {
 	template<> struct less<team> {
-		bool operator() (const team& teamA, const team& teamB) const {
-			return teamA.name < teamB.name;
+		bool operator() (const team& lHandSide, const team& rHandSide) const {
+			return lHandSide.name < rHandSide.name;
 		}
 	};
 }
@@ -177,6 +177,7 @@ public:
 		targetRad stores the radius of the object's bounding box in 3D space.
 	Lines inherits from tableFeatures which means it has the featureType() function return 0.
 	Rings inherits from tableFeatures which means it has the featureType() function return 1.
+	Used to make the sheet look more like a curling game, i.e. including the hog-line
 **/
 class tableFeatures {
 public:
@@ -218,7 +219,7 @@ class curlingSheet {
 	// Map of active players to prevent duplication
 	static std::map<team, std::vector<int>> actvPlayers; 
 private:
-	float tableScale = SCALE_FACTOR;
+	float tableScale = 0.5f;
 	int sheetPos;
 public:
 	edge edges[NUM_EDGES];
@@ -227,7 +228,7 @@ public:
 	//target rings[NUM_RINGS];
 	
 
-	float yAxisScale = 0.7;
+	float yAxisScale = (7.0f / 5.0f) * SCALE_FACTOR;
 	float hogLine, hackLine;
 	int stoneCnt = 0;
 	vec2 scoreCenter;

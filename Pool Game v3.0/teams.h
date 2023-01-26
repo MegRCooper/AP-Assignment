@@ -16,7 +16,8 @@ public:
 };
 
 class team {
-	static std::vector<player*> activePlayers; //vector of players to prevent duplication of players
+	// Vector of players to prevent duplication of players
+	static std::vector<player*> activePlayers; 
 public:
 	std::string name;
 	vec3 colour;

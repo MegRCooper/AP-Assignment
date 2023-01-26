@@ -51,6 +51,5 @@ void team::DeletePlayer(player* _player) {
 			activePlayers.erase(activePlayers.begin() + i);
 		}
 	}
-
 	delete _player;
 }

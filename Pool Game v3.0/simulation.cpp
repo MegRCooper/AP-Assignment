@@ -60,8 +60,9 @@ stone::stone(team _team) : stonePos(0.0), velocity(0.0), radius(STONE_RADIUS), m
 void stone::Reset(void) {
 	// Set velocity to Zero.
 	velocity = 0.0;
-	stonePos(0) = 0.0;
 	stonePos(1) = 0.5;
+	stonePos(0) = 0.0;
+	
 }
 
 void stone::ApplyImpulse(vec2 imp) {
@@ -115,7 +116,7 @@ bool stone::HasHitPlane(const edge& e) const {
 }
 
 bool stone::HasHitStone(const stone& s) const {
-	// Works out the relative pos od stone from other stones, distance between stones and relative velocity
+	// Works out the relative pos of stone from other stones, distance between stones and relative velocity
 	vec2 relPos = stonePos - s.stonePos;
 	float dist = (float)relPos.Magnitude();
 	vec2 relPosNorm = relPos.Normalised();
@@ -250,13 +251,13 @@ void particleSet::update(int ms) {
 std::map<team, std::vector<int>> curlingSheet::actvPlayers = {};
 
 curlingSheet::curlingSheet(int sheetNum) {
-	sheetPos = pow(-1.5, float(sheetNum)) * ceil(float(sheetNum) / 2);
+	sheetPos = pow(-1, float(sheetNum)) * ceil(float(sheetNum) / 2);
 	SetUpEdges();
 	SetUpTableFeatures();
 }
 
 void curlingSheet::SetUpEdges(void) {
-	/**
+/**
 	edges[0].vertices[0](0) = -TABLE_X;
 	edges[0].vertices[0](1) = -TABLE_Z;
 	edges[0].vertices[1](0) = -TABLE_X;
@@ -277,25 +278,25 @@ void curlingSheet::SetUpEdges(void) {
 	edges[3].vertices[1](0) = -TABLE_X;
 	edges[3].vertices[1](1) = -TABLE_Z; **/
 
-	edges[0].vertices[0](0) = sheetPos * yAxisScale * 4 - yAxisScale;
-	edges[0].vertices[0](1) = -20 * SCALE_FACTOR;
-	edges[0].vertices[1](0) = sheetPos * yAxisScale * 4 - yAxisScale;
-	edges[0].vertices[1](1) = 4 * SCALE_FACTOR;
+	edges[0].vertices[0](0) = sheetPos * yAxisScale * 2 - yAxisScale;
+	edges[0].vertices[0](1) = -10 * SCALE_FACTOR;
+	edges[0].vertices[1](0) = sheetPos * yAxisScale * 2 - yAxisScale;
+	edges[0].vertices[1](1) = 2 * SCALE_FACTOR;
 
-	edges[0].vertices[0](0) = sheetPos * yAxisScale * 4 - yAxisScale;
-	edges[0].vertices[0](1) = 4 * SCALE_FACTOR;
-	edges[0].vertices[1](0) = sheetPos * yAxisScale * 4 + yAxisScale;
-	edges[0].vertices[1](1) = 4 * SCALE_FACTOR;
-
-	edges[0].vertices[0](0) = sheetPos * yAxisScale * 4 + yAxisScale;
+	edges[0].vertices[0](0) = sheetPos * yAxisScale * 3 - yAxisScale;
 	edges[0].vertices[0](1) = 2 * SCALE_FACTOR;
-	edges[0].vertices[1](0) = sheetPos * yAxisScale * 4 + yAxisScale;
-	edges[0].vertices[1](1) = -20 * SCALE_FACTOR;
+	edges[0].vertices[1](0) = sheetPos * yAxisScale * 3 + yAxisScale;
+	edges[0].vertices[1](1) = 2 * SCALE_FACTOR;
 
-	edges[0].vertices[0](0) = sheetPos * yAxisScale * 4 + yAxisScale;
-	edges[0].vertices[0](1) = -20 * SCALE_FACTOR;
-	edges[0].vertices[1](0) = sheetPos * yAxisScale * 4 - yAxisScale;
-	edges[0].vertices[1](1) = -20 * SCALE_FACTOR;
+	edges[0].vertices[0](0) = sheetPos * yAxisScale * 3 + yAxisScale;
+	edges[0].vertices[0](1) = 2 * SCALE_FACTOR;
+	edges[0].vertices[1](0) = sheetPos * yAxisScale * 3 + yAxisScale;
+	edges[0].vertices[1](1) = -18 * SCALE_FACTOR;
+
+	edges[0].vertices[0](0) = sheetPos * yAxisScale * 3 + yAxisScale;
+	edges[0].vertices[0](1) = -18 * SCALE_FACTOR;
+	edges[0].vertices[1](0) = sheetPos * yAxisScale * 3 - yAxisScale;
+	edges[0].vertices[1](1) = -18 * SCALE_FACTOR;
 
 	for (int i = 0; i < NUM_EDGES; i++) {
 		edges[i].MakeCentre();
@@ -312,6 +313,7 @@ void curlingSheet::SetUpTableFeatures(void) {
 	hackLine = -17 * SCALE_FACTOR;
 
 	scoreCenter = vec2(sheetPos * yAxisScale * 3, -15 * SCALE_FACTOR);
+	// Makes the rings for the 'Target'
 	tableFeatures[2] = new rings(vec2(sheetPos * yAxisScale * 3, -15 * SCALE_FACTOR), SCALE_FACTOR / 10);
 	tableFeatures[3] = new rings(vec2(sheetPos * yAxisScale * 3, -15 * SCALE_FACTOR), SCALE_FACTOR / 3);
 	tableFeatures[4] = new rings(vec2(sheetPos * yAxisScale * 3, -15 * SCALE_FACTOR), (2 * SCALE_FACTOR) / 3);
@@ -320,19 +322,19 @@ void curlingSheet::SetUpTableFeatures(void) {
 
 void curlingSheet::Update(int ms) {
 	// Checks for collisions for each stone
-	for (int i = 0; i < NUM_STONES; i++) {
+	for (int i = 0; i < stoneCnt; i++) {
 		/*for (int j = (i + 1); j < NUM_RINGS; j++) {
 			stones[i].DoTargetCollision(rings[j]);
 		}*/
 		for (int j = 0; j < NUM_EDGES; j++) {
 			stones[i].DoPlaneCollision(edges[j]);
 		}
-		for (int j = (i + 1); j < NUM_STONES; j++) {
+		for (int j = (i + 1); j < stoneCnt; j++) {
 			stones[i].DoStoneCollision(stones[j]);
 		}
 	}
 	// Update all stones:
-	for (int i = 0; i < NUM_STONES; i++) stones[i].Update(ms);
+	for (int i = 0; i < stoneCnt; i++) stones[i].Update(ms);
 
 	// Update Particles:
 	parts.update(ms);
@@ -340,7 +342,7 @@ void curlingSheet::Update(int ms) {
 
 bool curlingSheet::AnyStonesMoving(void) const {
 	// Return true if any stone has a non-zero velocity.
-	for (int i = 0; i < NUM_STONES; i++) {
+	for (int i = 0; i < stoneCnt; i++) {
 		if (stones[i].velocity(0) != 0.0) return true;
 		if (stones[i].velocity(1) != 0.0) return true;
 	}
@@ -377,7 +379,7 @@ void curlingSheet::AddStone(void) {
 
 void curlingSheet::SetPlayer(team _team) {
 	teamIt[_team]++;
-	if (teamIt[_team] >= teams[_team].size()) {
+	if (teamIt[_team] > teams[_team].size()) {
 		teamIt[_team] = 0;
 	}
 	_team.players[teams[_team][teamIt[_team]]]->doAim = true;
@@ -427,12 +429,12 @@ void curlingSheet::RemovePlayer(team _team, int _player) {
 	}
 }
 
-lines::lines(vec2 vertex1, vec2 vertex2) {
-	vertices[0] = vertex1;
-	vertices[1] = vertex2;
+lines::lines(vec2 _vertex1, vec2 _vertex2) {
+	vertices[0] = _vertex1;
+	vertices[1] = _vertex2;
 }
 
-rings::rings(vec2 tCenter, float tRad) {
-	targetCenter= tCenter;
-	targetRad = tRad;
+rings::rings(vec2 _center, float _rad) {
+	targetCenter= _center;
+	targetRad = _rad;
 }
