@@ -6,10 +6,6 @@
 
 // MACROS:
 #define SMALL_VEL (0.01f)
-
-// GLOBALS:
-// curlingSheet gCurlingSheet;
-
 static const float gRackPositionX[] = { 0.0f, 0.0f,(STONE_RADIUS * 2.0f),(-STONE_RADIUS * 2.0f),(STONE_RADIUS * 4.0f) };
 static const float gRackPositionZ[] = { 0.5f, 0.0f,(-STONE_RADIUS * 3.0f),(-STONE_RADIUS * 3.0f) };
 
@@ -37,7 +33,6 @@ void edge::MakeCentre(void) {
 	centre = vertices[1];
 	centre /= 2.0;
 }
-
 /**
 	STONE CLASS MEMBERS:
 		Defines two variables - rowIndex [stores the current row number], row [stores the current column number.]
@@ -62,7 +57,6 @@ void stone::Reset(void) {
 	velocity = 0.0;
 	stonePos(1) = 0.5;
 	stonePos(0) = 0.0;
-	
 }
 
 void stone::ApplyImpulse(vec2 imp) {
@@ -150,7 +144,6 @@ void stone::HitPlane(const edge& e) {
 void stone::HitStone(stone& s) {
 	// Find direction from other stone to this stone
 	vec2 relDir = (stonePos - s.stonePos).Normalised();
-
 	/**
 		Split velocities into 2 parts:  one component perpendicular, and one parallel to the collision plane, for both stones.
 		(NB the collision plane is defined by the point of contact and the contact normal).
@@ -257,27 +250,6 @@ curlingSheet::curlingSheet(int sheetNum) {
 }
 
 void curlingSheet::SetUpEdges(void) {
-/**
-	edges[0].vertices[0](0) = -TABLE_X;
-	edges[0].vertices[0](1) = -TABLE_Z;
-	edges[0].vertices[1](0) = -TABLE_X;
-	edges[0].vertices[1](1) = TABLE_Z;
-
-	edges[1].vertices[0](0) = -TABLE_X;
-	edges[1].vertices[0](1) = TABLE_Z;
-	edges[1].vertices[1](0) = TABLE_X;
-	edges[1].vertices[1](1) = TABLE_Z;
-
-	edges[2].vertices[0](0) = TABLE_X;
-	edges[2].vertices[0](1) = TABLE_Z;
-	edges[2].vertices[1](0) = TABLE_X;
-	edges[2].vertices[1](1) = -TABLE_Z;
-
-	edges[3].vertices[0](0) = TABLE_X;
-	edges[3].vertices[0](1) = -TABLE_Z;
-	edges[3].vertices[1](0) = -TABLE_X;
-	edges[3].vertices[1](1) = -TABLE_Z; **/
-
 	edges[0].vertices[0](0) = sheetPos * yAxisScale * 2 - yAxisScale;
 	edges[0].vertices[0](1) = -10 * SCALE_FACTOR;
 	edges[0].vertices[1](0) = sheetPos * yAxisScale * 2 - yAxisScale;
