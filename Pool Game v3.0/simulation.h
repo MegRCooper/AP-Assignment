@@ -185,9 +185,12 @@ public:
 };
 
 class lines : public tableFeatures {
-	vec2 vertices[2];
+public:
+	vec2 vertices [2];
 	lines(vec2, vec2);
-	int tableFeatures() { return 0; };
+	int featureType() { 
+		return 0; 
+	};
 };
 
 class rings : public tableFeatures {
@@ -195,7 +198,9 @@ public:
 	vec2 targetCenter;
 	float targetRad;
 	rings(vec2, float);
-	int tableFeatures() { return 1; };
+	int featureType() {
+		return 1; 
+	};
 };
 
 /**
@@ -246,7 +251,6 @@ public:
 	void AddPlayer(team, int);
 	void RemovePlayer(team, int);
 };
-
 
 // Global curling sheet: 
 // Extern [tells the compiler that a variable is defined in another source module (outside of the current scope)]

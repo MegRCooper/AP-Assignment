@@ -318,7 +318,6 @@ void curlingSheet::SetUpTableFeatures(void) {
 	tableFeatures[5] = new rings(vec2(sheetPos * yAxisScale * 3, -15 * SCALE_FACTOR), SCALE_FACTOR);
 }
 
-
 void curlingSheet::Update(int ms) {
 	// Checks for collisions for each stone
 	for (int i = 0; i < NUM_STONES; i++) {
@@ -433,7 +432,7 @@ lines::lines(vec2 vertex1, vec2 vertex2) {
 	vertices[1] = vertex2;
 }
 
-rings::rings(vec2 tCenter, float tRrad) {
+rings::rings(vec2 tCenter, float tRad) {
 	targetCenter= tCenter;
-	targetRad = tRrad;
+	targetRad = tRad;
 }

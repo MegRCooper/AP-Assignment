@@ -95,6 +95,8 @@
     <ClCompile Include="simulation.cpp">
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">glut-3.7.6-bin;%</AdditionalIncludeDirectories>
     </ClCompile>
+    <ClCompile Include="stdClient.cpp" />
+    <ClCompile Include="StdServer.cpp" />
     <ClCompile Include="stdafx.cpp">
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">glut-3.7.6-bin;%</AdditionalIncludeDirectories>
     </ClCompile>
@@ -104,7 +106,6 @@
     <ClInclude Include="glui-2.36\src\include\GL\glui.h" />
     <ClInclude Include="glut-3.7.6-bin\glut.h" />
     <ClInclude Include="teams.h" />
-    <ClInclude Include="networkServer.h" />
     <ClInclude Include="simulation.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -115,6 +116,9 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="ClassDiagram.cd" />
+    <None Include="ClassDiagram1.cd" />
+    <None Include="ClassDiagram2.cd" />
     <None Include="glut-3.7.6-bin\glut-3.spec.pdf" />
     <None Include="glut-3.7.6-bin\glut.def" />
     <None Include="glut-3.7.6-bin\glut32.dll" />

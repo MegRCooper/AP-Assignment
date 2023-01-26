@@ -27,6 +27,12 @@
     <ClCompile Include="teams.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="StdServer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="stdClient.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="simulation.h">
@@ -46,9 +52,6 @@
     </ClInclude>
     <ClInclude Include="glui-2.36\src\include\GL\glui.h">
       <Filter>Resource Files</Filter>
-    </ClInclude>
-    <ClInclude Include="networkServer.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="teams.h">
       <Filter>Header Files</Filter>
@@ -70,6 +73,9 @@
     <None Include="glut-3.7.6-bin\glut32.dll">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="ClassDiagram.cd" />
+    <None Include="ClassDiagram1.cd" />
+    <None Include="ClassDiagram2.cd" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="glut-3.7.6-bin\glut32.lib">

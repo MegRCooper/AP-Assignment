@@ -1,5 +1,4 @@
 // Pool Game.cpp: Defines the entry point for the console app, while it's called Pool.cpp its a Curling Game.
-
 #include "stdafx.h"
 #include "stdafx.h"
 #include "simulation.h"
@@ -7,7 +6,6 @@
 #include <math.h>
 #include <iostream>
 #include <thread>
-
 
 // Aim Line variables:
 float gAimAngle = 0.0;
@@ -33,7 +31,7 @@ bool gCamD = false;
 bool gCamZin = false;
 bool gCamZout = false;
 
-std::vector<curlingSheet> tables;
+std::vector<curlingSheet> sheet;
 player* locPlayer;
 team _team;
 
@@ -42,7 +40,7 @@ team _team;
 
 /**
 	VOID DOCAMERA:
-	This funxtion rotates the camera around its center point.
+	This function rotates the camera around its center point.
 	It takes an int value [ms], which represents milliseconds.
 	The first line of code creates a variable named up stores three vars [0.0, 1.0, and 0.0]
 	respectively for x-, y- and z-axis coordinates. (represents the direction towards the top of the screen).
@@ -164,14 +162,14 @@ void DrawCircle(float cx, float cy, float r, int numSegs) {
 }
 
 int RenderTable(size_t tab) {
-	for (int i = 0; i < tables[tab].stoneCnt; i++) {
+	for (int i = 0; i < sheet[tab].stoneCnt; i++) {
 		glDisable(GL_LIGHTING);
-		glColor3f(tables[tab].stones[i].stoneTeam.colour(0), tables[tab].stones[i].stoneTeam.colour(1), tables[tab].stones[i].stoneTeam.colour(2));
+		glColor3f(sheet[tab].stones[i].stoneTeam.colour(0), sheet[tab].stones[i].stoneTeam.colour(1), sheet[tab].stones[i].stoneTeam.colour(2));
 		glPushMatrix();
-		glTranslatef(tables[tab].stones[i].stonePos(0), (STONE_RADIUS / 2.0), tables[tab].stones[i].stonePos(1));
+		glTranslatef(sheet[tab].stones[i].stonePos(0), (STONE_RADIUS / 2.0), sheet[tab].stones[i].stonePos(1));
 		glScalef(1.0, 0.3, 1.0);
 #if DRAW_SOLID
-		glutSolidSphere(tables[tab].stones[i].radius, 32, 32);
+		glutSolidSphere(sheet[tab].stones[i].radius, 32, 32);
 #else
 		glutWireSphere(tables[tab].stones[i].radius, 12, 12);
 #endif
@@ -183,29 +181,29 @@ int RenderTable(size_t tab) {
 	// Draw the table
 	for (int i = 0; i < NUM_EDGES; i++) {
 		glBegin(GL_LINE_LOOP);
-		glVertex3f(tables[tab].edges[i].vertices[0](0), 0.0, tables[tab].edges[i].vertices[0](1));
-		glVertex3f(tables[tab].edges[i].vertices[0](0), 0.1, tables[tab].edges[i].vertices[0](1));
-		glVertex3f(tables[tab].edges[i].vertices[1](0), 0.1, tables[tab].edges[i].vertices[1](1));
-		glVertex3f(tables[tab].edges[i].vertices[1](0), 0.0, tables[tab].edges[i].vertices[1](1));
+		glVertex3f(sheet[tab].edges[i].vertices[0](0), 0.0, sheet[tab].edges[i].vertices[0](1));
+		glVertex3f(sheet[tab].edges[i].vertices[0](0), 0.1, sheet[tab].edges[i].vertices[0](1));
+		glVertex3f(sheet[tab].edges[i].vertices[1](0), 0.1, sheet[tab].edges[i].vertices[1](1));
+		glVertex3f(sheet[tab].edges[i].vertices[1](0), 0.0, sheet[tab].edges[i].vertices[1](1));
 		glEnd();
 	}
 
 	for (int i = 0; i < TABLE_FEATURES; i++) {
-		if (lines* x = dynamic_cast<lines*>(tables[tab].tableFeatures[i])) {
+		if (lines* x = dynamic_cast<lines*>(sheet[tab].tableFeatures[i])) {
 			glBegin(GL_LINE_LOOP);
-			glVertex3f(x->vertices[0](0), 0.0, x->vertices[0](1));
-			glVertex3f(x->vertices[1](0), 0.0, x->vertices[1](1));
+			glVertex3f(x -> vertices[0](0), 0.0, x -> vertices[0](1));
+			glVertex3f(x -> vertices[1](0), 0.0, x -> vertices[1](1));
 			glEnd();
 		}
-		else if (rings* x = dynamic_cast<rings*>(tables[tab].tableFeatures[i])) {
+		else if (rings* x = dynamic_cast<rings*>(sheet[tab].tableFeatures[i])) {
 			DrawCircle(x->targetCenter(0), x->targetCenter(1), x->targetRad, 30);
 		}
 	}
 
-	for (int i = 0; i < tables[tab].parts.num; i++) {
+	for (int i = 0; i < sheet[tab].parts.num; i++) {
 		glColor3f(1.0, 0.0, 0.0);
 		glPushMatrix();
-		glTranslatef(tables[tab].parts.particles[i]->partPos(0), tables[tab].parts.particles[i]->partPos(1), tables[tab].parts.particles[i]->partPos(2));
+		glTranslatef(sheet[tab].parts.particles[i]->partPos(0), sheet[tab].parts.particles[i]->partPos(1), sheet[tab].parts.particles[i]->partPos(2));
 #if DRAW_SOLID
 		glutSolidSphere(0.002f, 32, 32);
 #else
@@ -268,7 +266,7 @@ void RenderScene(void) {
 
 	glColor3f(1.0,1.0,1.0);
 
-	for (size_t tab = 0; tab < tables.size(); tab++) {
+	for (size_t tab = 0; tab < sheet.size(); tab++) {
 		RenderTable(tab);
 	}
 
@@ -310,22 +308,21 @@ void RenderScene(void) {
 	}
 	glFlush();
 	glutSwapBuffers(); **/
-
+	
+	// Drawing the Aiming Line:
 	if (locPlayer->doAim) {
 		glBegin(GL_LINES);
 		float cuex = sin(gAimAngle) * gAimPower;
 		float cuez = cos(gAimAngle) * gAimPower;
 		glColor3f(1.0, 0.0, 0.0);
-		glVertex3f(tables[0].stones[tables[0].stoneCnt - 1].stonePos(0), (STONE_RADIUS / 2.0f), tables[0].stones[tables[0].stoneCnt - 1].stonePos(1));
-		glVertex3f((tables[0].stones[tables[0].stoneCnt - 1].stonePos(0) + cuex), (STONE_RADIUS / 2.0f), (tables[0].stones[tables[0].stoneCnt - 1].stonePos(1) + cuez));
+		glVertex3f(sheet[0].stones[sheet[0].stoneCnt - 1].stonePos(0), (STONE_RADIUS / 2.0f), sheet[0].stones[sheet[0].stoneCnt - 1].stonePos(1));
+		glVertex3f((sheet[0].stones[sheet[0].stoneCnt - 1].stonePos(0) + cuex), (STONE_RADIUS / 2.0f), (sheet[0].stones[sheet[0].stoneCnt - 1].stonePos(1) + cuez));
 		glColor3f(1.0, 1.0, 1.0);
 		glEnd();
 	}
 	glFlush();
 	glutSwapBuffers();
 }
-
-
 
 // NOT CHANGED ANY OF THE BELOW AS ITS FROM THE BASE CODE PROVIDED IN WORKSHOP WEEK 4:
 void SpecKeyboardFunc(int key, int x, int y) {
@@ -384,15 +381,15 @@ void KeyboardFunc(unsigned char key, int x, int y) {
 	{
 		if (locPlayer->doAim){
 			vec2 imp((-sin(gAimAngle) * gAimPower * gPlayerStoneFactor),(-cos(gAimAngle) * gAimPower * gPlayerStoneFactor));
-			tables[0].stones[tables[0].stoneCnt - 1].ApplyImpulse(imp);
+			sheet[0].stones[sheet[0].stoneCnt - 1].ApplyImpulse(imp);
 			locPlayer->doAim = false;
 		}
 		break;
 	}
 	case(27):
 	{
-		for (int i = 0; i < NUM_STONES; i++) {
-			gCurlingSheet.stones[i].Reset();
+		for (int i = 0; i < sheet[0].stoneCnt; i++) {
+			sheet[0].stones[i].Reset();
 		}
 		break;
 	}
@@ -502,6 +499,7 @@ void InitLights(void) {
 	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
 	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
 	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+
 	GLfloat light_ambient[] = { 2.0, 2.0, 2.0, 1.0 };
 	glLightfv(GL_LIGHT1, GL_AMBIENT, light_ambient);
 
@@ -512,22 +510,21 @@ void InitLights(void) {
 }
 
 void UpdateScene(int ms) {
-	int TestVar = tables.size();
-	for (size_t tab = 0; tab < tables.size(); tab++) {
-		if (tables[tab].AnyStoneMoving() == false) {
-			if (tables[tab].doAim == false) {
-				tables[tab].CheckStones();
-				tables[tab].AddStone();
+	int testVar = sheet.size();
+	for (size_t tab = 0; tab < sheet.size(); tab++) {
+		if (sheet[tab].AnyStonesMoving() == false) {
+			if (sheet[tab].doAim == false) {
+				sheet[tab].CheckStones();
+				sheet[tab].AddStone();
 			}
-			tables[tab].doAim = true;
-			CamSetLoc(vec3(0.0, 10, 2.1), vec3(0.0, 0.0, -3.0));
+			sheet[tab].doAim = true;
+			CamSetLoc(vec3(0.0, 10, 2.0), vec3(0.0, 0.0, -3.0));
 		}
 		else {
-			tables[tab].doAim = false;
+			sheet[tab].doAim = false;
 			CamSetLoc(vec3(0.0, 5, -15 * SCALE_FACTOR), vec3(0.0, 0.0, -7));
 		}
-
-		tables[tab].Update(ms);
+		sheet[tab].Update(ms);
 	}
 
 	if (locPlayer->doAim) {
@@ -538,12 +535,10 @@ void UpdateScene(int ms) {
 
 		if (gAimControl[2]) gAimPower += ((gAimPowerSpeed * ms) / 1000);
 		if (gAimControl[3]) gAimPower -= ((gAimPowerSpeed * ms) / 1000);
-		if (gAimControl > gAimPowerMax) gAimPower = gAimPowerMax;
+		if (gAimPower> gAimPowerMax) gAimPower = gAimPowerMax;
 		if (gAimPower < gAimPowerMin) gAimPower = gAimPowerMin;
 	}
-
 	DoCamera(ms);
-
 	glutTimerFunc(SIM_UPDATE_MS, UpdateScene, SIM_UPDATE_MS);
 	glutPostRedisplay();
 }
@@ -552,6 +547,27 @@ int _tmain(int argc, _TCHAR* argv[]) {
 	//gCurlingSheet.SetUpEdges();
 	//gCurlingSheet.SetUpRings();
 	//gCurlingSheet.stones[0].SetPlayerStone();
+
+	locPlayer = new player();
+	locPlayer->doAim = true;
+	player* playerTwo = new player();
+
+
+	team teamOne = team();
+	teamOne.name = "Team One";
+	teamOne.AddPlayer(locPlayer);
+	team teamTwo = team();
+	teamTwo.name = "Team Two";
+	teamTwo.AddPlayer(playerTwo);
+
+	for (int i = 0; i < TABLE_NUM; i++) {
+		sheet.push_back(curlingSheet(i));
+		sheet[i].AddPlayer(teamOne, 0);
+		sheet[i].AddPlayer(teamTwo, 0);
+		sheet[i].SetUpOrder();
+		sheet[i].AddStone();
+	}
+
 	glutInit(&argc, ((char**)argv));
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowPosition(0, 0);
