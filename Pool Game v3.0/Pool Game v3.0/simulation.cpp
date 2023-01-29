@@ -1,337 +1,328 @@
-/*-----------------------------------------------------------
-  Simulation Source File
-  -----------------------------------------------------------*/
-#include"stdafx.h"
-#include"simulation.h"
-#include<stdio.h>
-#include<stdlib.h>
+// Simulation Source File:
+#include "stdafx.h"
+#include "simulation.h"
+#include <stdio.h>
+#include <stdlib.h>
 
+// MACROS:
+#define SMALL_VEL (0.01f)
 
-/*-----------------------------------------------------------
-  macros
-  -----------------------------------------------------------*/
-#define SMALL_VELOCITY		(0.01f)
-
-/*-----------------------------------------------------------
-  globals
-  -----------------------------------------------------------*/
-/*
-vec2	gPlaneNormal_Left(1.0,0.0);
-vec2	gPlaneNormal_Top(0.0,1.0);
-vec2	gPlaneNormal_Right(-1.0,0.0);
-vec2	gPlaneNormal_Bottom(0.0,-1.0);
-*/
-
-table gTable;
-
-static const float gRackPositionX[] = {0.0f,0.0f,(BALL_RADIUS*2.0f),(-BALL_RADIUS*2.0f),(BALL_RADIUS*4.0f)}; 
-static const float gRackPositionZ[] = {0.5f,0.0f,(-BALL_RADIUS*3.0f),(-BALL_RADIUS*3.0f)}; 
+// GLOBALS:
+curlingSheet gCurlingSheet;
 
 float gCoeffRestitution = 0.5f;
 float gCoeffFriction = 0.03f;
-float gGravityAccn = 9.8f;
+float gGravityAcc = 9.8f;
 
+static const float gRackPositionX[] = { 0.0f, 0.0f,(STONE_RADIUS * 2.0f),(-STONE_RADIUS * 2.0f),(STONE_RADIUS * 4.0f) };
+static const float gRackPositionZ[] = { 0.5f, 0.0f,(-STONE_RADIUS * 3.0f),(-STONE_RADIUS * 3.0f) };
 
-/*-----------------------------------------------------------
-  cushion class members
-  -----------------------------------------------------------*/
-void cushion::MakeNormal(void)
-{
-	//can do this in 2d
-	vec2 temp = vertices[1]-vertices[0];
-	normal(0) = temp(1);
-	normal(1) = -temp(0);
+/**
+	EDGE CLASS MEMBERS:
+		Creates two vectors - temp & normal. The first is in the direction of the edge in the X-direction
+		while the second is in the direction of the edge in the Y-direction.
+	It then calcs two new vectors and normalises and centres - normailises scales both vectors so they have a len of 1.
+	Centre calcs where on the screen [0,0], should be placed for each vec, based on their respective lens and angles.
+**/
+void edge::MakeNormal(void) {
+	// Provided - can do in 2-D
+	vec2 tempVertices = vertices[1] - vertices[0];
+	normal(0) = tempVertices(1);
+	normal(1) = -tempVertices(0);
 	normal.Normalise();
 }
 
-void cushion::MakeCentre(void)
-{
+void edge::MakeCentre(void) {
 	centre = vertices[0];
-	centre += vertices[1];
-	centre/=2.0;
+	centre = vertices[1];
+	centre /= 2.0;
 }
 
-/*-----------------------------------------------------------
-  ball class members
-  -----------------------------------------------------------*/
-int ball::ballIndexCnt = 0;
+// Player class Members:
+int player::playerIndxCnt = 0;
 
-void ball::Reset(void)
-{
-	//set velocity to zero
+/**
+	STONE CLASS MEMBERS:
+		Defines two variables - rowIndex [stores the current row number], row [stores the current column number.]
+	Starts by setting the velocity to Zero [IMPORTANT - It'll help keep the stines in place as they're drawn on screen].
+	Iteration through the rows in turn - Starts at rowOne works down to rowZero:
+		For each row it calcs how far away from (and to) RowOne (the starting point), that psrticular row is located.
+		This info is then used to calc where each stone should be pos onscreen. Final line sets up the pos of all stones in the game.
+		It calculates the row and column coordinates of each stone based on its current position and radius.
+		Updates the pos of each stone based on these Coords.
+**/
+
+int stone::stoneIndxCnt = 0;
+void stone::Reset(void) {
 	velocity = 0.0;
+	if (indx == 0) {
+		stonePos(1) = TABLE_Z - 0.25;
+		stonePos(0) = 0;
+	}
+	else {
+		stonePos(1) = TABLE_Z + (0.1 * indx);
+		stonePos(0) = -0.5;
+	}
 
-	//work out rack position
-	if(index==0)
-	{
-		position(1) = 0.5;
-		position(0) = 0.0;
-		return;
-	}
-	
-	static const float sep = (BALL_RADIUS*3.0f);
-	static const float rowSep = (BALL_RADIUS*2.5f);
-	int row = 1;
-	int rowIndex = index;
-	while(rowIndex > row)
-	{
-		rowIndex -= row;
-		row++;
-	}
-	position(1) =  -(rowSep * (row-1));
-	position(0) = (((row-1)*sep)/2.0f) - (sep*(row-rowIndex));
 }
 
-void ball::ApplyImpulse(vec2 imp)
-{
+void stone::ApplyImpulse(vec2 imp) {
 	velocity = imp;
 }
 
-void ball::ApplyFrictionForce(int ms)
-{
-	if(velocity.Magnitude()<=0.0) return;
-
-	//accelaration is opposite to direction of motion
+void stone::ApplyFrictionForce(int ms) {
+	if (velocity.Magnitude() <= 0.0) return;
+	// Acceleration is opposite to the direction of Motion:
 	vec2 accelaration = -velocity.Normalised();
-	//friction force = constant * mg
-	//F=Ma, so accelaration = force/mass = constant*g
-	accelaration *= (gCoeffFriction * gGravityAccn);
-	//integrate velocity : find change in velocity
-	vec2 velocityChange = ((accelaration * ms)/1000.0f);
-	//cap magnitude of change in velocity to remove integration errors
-	if(velocityChange.Magnitude() > velocity.Magnitude()) velocity = 0.0;
-	else velocity += velocityChange;
+	// F=(MA), thus acceleration = force/mass = constant*g
+	accelaration *= (gCoeffFriction * gGravityAcc);
+	// Integrate velocity [find the change in V].
+	vec2 velChange = ((accelaration * ms) / 1000.0f);
+	// Cap magnitude of change in velocity to remove intergration errs.
+	if (velChange.Magnitude() > velocity.Magnitude())
+		velocity = 0.0;
+	else
+		velocity += velChange;
 }
 
-void ball::DoBallCollision(ball &b)
-{
-	if(HasHitBall(b)) HitBall(b);
+void stone::DoStoneCollision(stone& s) {
+	if (HasHitStone(s))
+		HitStone(s);
 }
 
-void ball::DoPlaneCollision(const cushion &b)
-{
-	if(HasHitPlane(b)) HitPlane(b);
+void stone::DoPlaneCollision(const edge& e) {
+	if (HasHitPlane(e))
+		HitPlane(e);
 }
 
-void ball::Update(int ms)
-{
-	//apply friction
+void stone::DoTargetCollision(target& t) {
+
+}
+
+void stone::Update(int ms) {
+	// Applying Friction:
 	ApplyFrictionForce(ms);
-	//integrate position
-	position += ((velocity * ms)/1000.0f);
-	//set small velocities to zero
-	if(velocity.Magnitude()<SMALL_VELOCITY) velocity = 0.0;
+	stonePos += ((velocity * ms) / 1000.f);
+	// Setting small velocities to zero.
+	if (velocity.Magnitude() < SMALL_VEL)
+		velocity = 0.0;
 }
 
-bool ball::HasHitPlane(const cushion &c) const
-{
-	//if moving away from plane, cannot hit
-	if(velocity.Dot(c.normal) >= 0.0) return false;
-	
-	//if in front of plane, then have not hit
-	vec2 relPos = position - c.vertices[0];
-	double sep = relPos.Dot(c.normal);
-	if(sep > radius) return false;
+bool stone::HasHitPlane(const edge& e) const {
+	if (tTarget != NULL)
+		return false;
+	// If moving away from plane, cannot hit.
+	if (velocity.Dot(e.normal) >= 0.0)
+		return false;
+	// If in front of the Plane, then haven't hit:
+	vec2 relPos = stonePos - e.vertices[0];
+	double sep = relPos.Dot(e.normal);
+	if (sep > radius)
+		return false;
 	return true;
 }
 
-bool ball::HasHitBall(const ball &b) const
-{
-	//work out relative position of ball from other ball,
-	//distance between balls
-	//and relative velocity
-	vec2 relPosn = position - b.position;
-	float dist = (float) relPosn.Magnitude();
+//NOT SURE THIS IS NEEDED AS IT IS FROM THE OG CODE - decide if required and adjust as needed!!
+bool stone::HasHitTarget(const target& t) const {
+	// work out relative position of stone from target,	distance between stone and target and relative velocity
+	vec2 relPosn = stonePos - t.targetCenter;
+	float dist = (float)relPosn.Magnitude();
 	vec2 relPosnNorm = relPosn.Normalised();
-	vec2 relVelocity = velocity - b.velocity;
 
-	//if moving apart, cannot have hit
-	if(relVelocity.Dot(relPosnNorm) >= 0.0) return false;
-	//if distnce is more than sum of radii, have not hit
-	if(dist > (radius+b.radius)) return false;
+	//if moving away from plane, cannot hit
+	if (velocity.Dot(relPosnNorm) >= 0.0) return false;
+	//if distnce is more than sum of radi, have not hit
+	if (dist > (radius + t.targetRad)) return false;
 	return true;
 }
 
-void ball::HitPlane(const cushion &c)
-{
-	//reverse velocity component perpendicular to plane  
-	double comp = velocity.Dot(c.normal) * (1.0+gCoeffRestitution);
-	vec2 delta = -(c.normal * comp);
-	velocity += delta; 
-
-	//make some particles
-	int n = (rand()%4)+3;
-	vec3 pos(position(0),radius/2.0,position(1));
-	vec3 oset(c.normal(0),0.0,c.normal(1));
-	pos+=(oset*radius);
-	for(int i=0;i<n;i++)
-	{
-		gTable.parts.AddParticle(pos);
-	}
-
-/*
-	//assume elastic collision
-	//find plane normal
-	vec2 planeNorm = gPlaneNormal_Left;
-	//split velocity into 2 components:
-	//find velocity component perpendicular to plane
-	vec2 perp = planeNorm*(velocity.Dot(planeNorm));
-	//find velocity component parallel to plane
-	vec2 parallel = velocity - perp;
-	//reverse perpendicular component
-	//parallel component is unchanged
-	velocity = parallel + (-perp)*gCoeffRestitution;
-*/
+bool stone::HasHitStone(const stone& s) const {
+	// Works out the relative pos od stone from other stones, distance between stones and relative velocity
+	vec2 relPos = stonePos - s.stonePos;
+	float dist = (float)relPos.Magnitude();
+	vec2 relPosNorm = relPos.Normalised();
+	vec2 relVel = velocity - s.velocity;
+	// Moving apart cannot hit:
+	if (relVel.Dot(relPosNorm) >= 0.0)
+		return false;
+	// If distnce is more than sum of radii, have not hit
+	if (dist > (radius + s.radius))
+		return false;
+	return true;
 }
 
-void ball::HitBall(ball &b)
-{
-	//find direction from other ball to this ball
-	vec2 relDir = (position - b.position).Normalised();
+void stone::HitPlane(const edge& e) {
+	// Reverse velocity component perpendicular to plane  
+	double comp = velocity.Dot(e.normal) * (1.0 + gCoeffRestitution);
+	vec2 delta = -(e.normal * comp);
+	velocity += delta;
+}
 
-	//split velocities into 2 parts:  one component perpendicular, and one parallel to 
-	//the collision plane, for both balls
-	//(NB the collision plane is defined by the point of contact and the contact normal)
+
+
+void stone::HitStone(stone& s) {
+	// Find direction from other stone to this stone
+	vec2 relDir = (stonePos - s.stonePos).Normalised();
+
+	/**
+		Split velocities into 2 parts:  one component perpendicular, and one parallel to the collision plane, for both stones.
+		(NB the collision plane is defined by the point of contact and the contact normal).
+	**/
 	float perpV = (float)velocity.Dot(relDir);
-	float perpV2 = (float)b.velocity.Dot(relDir);
-	vec2 parallelV = velocity-(relDir*perpV);
-	vec2 parallelV2 = b.velocity-(relDir*perpV2);
-	
-	//Calculate new perpendicluar components:
-	//v1 = (2*m2 / m1+m2)*u2 + ((m1 - m2)/(m1+m2))*u1;
-	//v2 = (2*m1 / m1+m2)*u1 + ((m2 - m1)/(m1+m2))*u2;
-	float sumMass = mass + b.mass;
-	float perpVNew = (float)((perpV*(mass-b.mass))/sumMass) + (float)((perpV2*(2.0*b.mass))/sumMass);
-	float perpVNew2 = (float)((perpV2*(b.mass-mass))/sumMass) + (float)((perpV*(2.0*mass))/sumMass);
-	
-	//find new velocities by adding unchanged parallel component to new perpendicluar component
-	velocity = parallelV + (relDir*perpVNew);
-	b.velocity = parallelV2 + (relDir*perpVNew2);
+	float perpV2 = (float)s.velocity.Dot(relDir);
+	vec2 parallelV = velocity - (relDir * perpV);
+	vec2 parallelV2 = s.velocity - (relDir * perpV2);
 
+	// Calcs new perpendicular comps.
+	float sumMass = mass + s.mass;
+	float perpVNew = (float)((perpV * (mass - s.mass)) / sumMass) + (float)((perpV2 * (2.0 * s.mass)) / sumMass);
+	float perpVNew2 = (float)((perpV2 * (s.mass - mass)) / sumMass) + (float)((perpV * (2.0 * mass)) / sumMass);
 
-	//make some particles
-	int n = (rand()%5)+5;
-	vec3 pos(position(0),radius/2.0,position(1));
-	vec3 oset(relDir(0),0.0,relDir(1));
-	pos+=(oset*radius);
-	for(int i=0;i<n;i++)
-	{
-		gTable.parts.AddParticle(pos);
+	// Find new velocities by adding unchanged parallel component to new perpendicluar component.
+	velocity = parallelV + (relDir * perpVNew);
+	s.velocity = parallelV2 + (relDir * perpVNew2);
+
+	// Adding of particles for clashes between stones:
+	int randNumParts = (rand() % 5) + 5;
+	vec3 pos(stonePos(0), radius / 2.0, stonePos(1));
+	vec3 oset(relDir(0), 0.0, relDir(1));
+	pos += (oset * radius);
+	for (int i = 0; i < randNumParts; i++) {
+		gCurlingSheet.parts.AddParticle(pos);
 	}
 }
 
-/*-----------------------------------------------------------
-  particle class members
-  -----------------------------------------------------------*/
-void particle::update(int ms)
-{
-	position += (velocity*ms)/1000.0;
-	velocity(1) -= (4.0*ms)/1000.0; //(9.8*ms)/1000.0;
+void stone::SetPlayerStone() {
+	isPlayerStone = true;
 }
 
-/*-----------------------------------------------------------
-  particle set class members
-  -----------------------------------------------------------*/
-void particleSet::AddParticle(const vec3 &pos)
-{
-	if(num >= MAX_PARTICLES) return;
-	particles[num] = new particle;
-	particles[num]->position = pos;
+/**
+	PARTICLE CLASS MEMBERS:
+	The particle position is updated every millisec.
+	partPos += (partVel * ms) / 1000.0; - The first line adds partPos to the current value of partPos and / 1,000 to get a new value for partVel every millisecond.
+	This will cause the velocity of particles to increase over time as they move away from their starting point in space.
+	partVel(1) -= (4.0 * ms) / 1000.0; - The second line subtracts 4 times per millisecond from the current velocity and divides that number by 9800 seconds per minute to get a new velocity 
+	for each particle at each step in time.
+	
+**/
+void particle::update(int ms) {
+	partPos += (partVel * ms) / 1000.0;
+	partVel(1) -= (4.0 * ms) / 1000.0; //(9.8*ms)/1000.0;
+}
 
-	particles[num]->velocity(0) = ((rand() % 200)-100)/200.0;
-	particles[num]->velocity(2) = ((rand() % 200)-100)/200.0;
-	particles[num]->velocity(1) = 2.0*((rand() % 100)/100.0);
+/**
+	PARTICLE SET CLASS MEMBERS:
+	 Starts by checking to see if the particleSet has reached its maximum number of particles.
+		If yes - deletes all particles and starts the count at 0.
+	Then a rand value is generated in range (0-200) - this value is used as the velocity for each induvidual particle in the set.
+	 The velocities are multiplied by 2, 1, or -1 depending on which side of the center line they fall on respectively (0-100).
+	 Finally, every time ms milliseconds pass since last update(), 'i' will be incremented by one until it reaches num whereupon 
+	 'i' will stop updating and delete itself from the list so that there are no more updates to do.
+**/
+void particleSet::AddParticle(const vec3& pos) {
+	if (num >= MAX_PARTICLES) return;
+	particles[num] = new particle;
+	particles[num]-> partPos = pos;
+
+	particles[num]->partVel(0) = ((rand() % 200) - 100) / 200.0;
+	particles[num]->partVel(2) = ((rand() % 200) - 100) / 200.0;
+	particles[num]->partVel(1) = 2.0 * ((rand() % 100) / 100.0);
 
 	num++;
 }
 
-void particleSet::update(int ms)
-{
-	int i=0;
-	while(i<num)
-	{
+void particleSet::update(int ms) {
+	int i = 0;
+	while (i < num) {
 		particles[i]->update(ms);
-		if((particles[i]->position(1) < 0.0) && (particles[i]->velocity(1)<0.0))
-		{
+		if ((particles[i]->partPos(1) < 0.0) && (particles[i]->partVel(1) < 0.0)) {
 			delete particles[i];
-			particles[i] = particles[num-1];
+			particles[i] = particles[num - 1];
 			num--;
 		}
 		else i++;
 	}
 }
 
-/*-----------------------------------------------------------
-  table class members
-  -----------------------------------------------------------*/
-void table::SetupCushions(void)
-{
-	cushions[0].vertices[0](0) = -TABLE_X; 
-	cushions[0].vertices[0](1) = -TABLE_Z; 
-	cushions[0].vertices[1](0) = -TABLE_X; 
-	cushions[0].vertices[1](1) = TABLE_Z; 
+/**
+	CURLINGSHEET CLASS MEMBERS:
+	Starts by setting up the four edges of the curling sheet.
+		First edge is set to have vertices [-TABLE_X, -TABLE_Z].
+		Second edge is set to have vertices [0,0].
+		Third edge is set to have vertices [1,1].
+		Fourth edge is set to have verticies [-TABLE_X, TABLE_Z].
+	It then loops through all of the edges setting up the vertices using two variables; one for the x value,
+	the other for the z - it sets these variables to be equal to -TABLE_X and TABLE_Z, respectively.
+		This ensures that each vertex will be located on either side of the center line
+	Finally, it writes these values out to memory so that they can be used later when drawing graphics.
+	Variables declared as i and j - which stores the current pos of the left most and right most stones, respectivley.
+	It then checks to see if any of the stones have collided with each other.
+	The code first sets up a variable to store the number of stones on the curling sheet, as well as the number of rings.
+	It then checks for any collisions between each stone and the rings.
+	If there are any collisions, the code will then proceed to update each individual stone's position.
 
-	cushions[1].vertices[0](0) = -TABLE_X; 
-	cushions[1].vertices[0](1) = TABLE_Z; 
-	cushions[1].vertices[1](0) = TABLE_X; 
-	cushions[1].vertices[1](1) = TABLE_Z; 
+		ADD TO WITH A FINISHED DEFINITIONS
+**/
 
-	cushions[2].vertices[0](0) = TABLE_X; 
-	cushions[2].vertices[0](1) = TABLE_Z; 
-	cushions[2].vertices[1](0) = TABLE_X; 
-	cushions[2].vertices[1](1) = -TABLE_Z + 0.3; 
+void curlingSheet::SetUpEdges(void) {
+	edges[0].vertices[0](0) = -TABLE_X;
+	edges[0].vertices[0](1) = -TABLE_Z;
+	edges[0].vertices[1](0) = -TABLE_X;
+	edges[0].vertices[1](1) = TABLE_Z;
 
-	cushions[3].vertices[0](0) = TABLE_X; 
-	cushions[3].vertices[0](1) = -TABLE_Z + 0.3; 
-	cushions[3].vertices[1](0) = TABLE_X - 0.3; 
-	cushions[3].vertices[1](1) = -TABLE_Z; 
+	edges[1].vertices[0](0) = -TABLE_X;
+	edges[1].vertices[0](1) = TABLE_Z;
+	edges[1].vertices[1](0) = TABLE_X;
+	edges[1].vertices[1](1) = TABLE_Z;
 
-	cushions[4].vertices[0](0) = TABLE_X - 0.3; 
-	cushions[4].vertices[0](1) = -TABLE_Z; 
-	cushions[4].vertices[1](0) = -TABLE_X; 
-	cushions[4].vertices[1](1) = -TABLE_Z; 
+	edges[2].vertices[0](0) = TABLE_X;
+	edges[2].vertices[0](1) = TABLE_Z;
+	edges[2].vertices[1](0) = TABLE_X;
+	edges[2].vertices[1](1) = -TABLE_Z;
 
-	for(int i=0;i<NUM_CUSHIONS;i++)
-	{
-		cushions[i].MakeCentre();
-		cushions[i].MakeNormal();
+	edges[3].vertices[0](0) = TABLE_X;
+	edges[3].vertices[0](1) = -TABLE_Z;
+	edges[3].vertices[1](0) = -TABLE_X;
+	edges[3].vertices[1](1) = -TABLE_Z;
+
+	for (int i = 0; i < NUM_EDGES; i++) {
+		edges[i].MakeCentre();
+		edges[i].MakeNormal();
 	}
 }
 
-void table::Update(int ms)
-{
-	//check for collisions for each ball
-	for(int i=0;i<NUM_BALLS;i++) 
-	{
-		for(int j=0;j<NUM_CUSHIONS;j++)
-		{
-			balls[i].DoPlaneCollision(cushions[j]);
-		}
-
-		for(int j=(i+1);j<NUM_BALLS;j++) 
-		{
-			balls[i].DoBallCollision(balls[j]);
-		}
+void curlingSheet::SetUpRings(void) {
+	for (int i = 0; i < NUM_RINGS; i++) {
+		rings[i].targetCenter(0) = 0;
+		float zLoc = (TABLE_X * 2) - (TARGET_SPACING * NUM_RINGS);
+		rings[i].targetCenter(1) = zLoc - TABLE_Z;
 	}
-	
-	//update all balls
-	for(int i=0;i<NUM_BALLS;i++) balls[i].Update(ms);
-
-	//update particles
-	parts.update(ms);
-
-	//make some new particles
-	//vec3 pos(0.0,BALL_RADIUS,0.0);
-	//parts.AddParticle(pos);
 }
 
-bool table::AnyBallsMoving(void) const
-{
-	//return true if any ball has a non-zero velocity
-	for(int i=0;i<NUM_BALLS;i++) 
-	{
-		if(balls[i].velocity(0)!=0.0) return true;
-		if(balls[i].velocity(1)!=0.0) return true;
+
+void curlingSheet::Update(int ms) {
+
+	// Checks for collisions for each stone
+	for (int i = 0; i < NUM_STONES; i++) {
+		for (int j = (i + 1); j < NUM_RINGS; j++) {
+			stones[i].DoTargetCollision(rings[j]);
+		}
+		for (int j = 0; j < NUM_EDGES; j++) {
+			stones[i].DoPlaneCollision(edges[j]);
+		}
+		for (int j = (i + 1); j < NUM_STONES; j++) {
+			stones[i].DoStoneCollision(stones[j]);
+		}
+	}
+	// Update all stones:
+	for (int i = 0; i < NUM_STONES; i++) stones[i].Update(ms);
+}
+
+bool curlingSheet::AnyStonesMoving(void) const {
+	// Return true if any stone has a non-zero velocity.
+	for (int i = 0; i < NUM_STONES; i++) {
+		if (stones[i].velocity(0) != 0.0) return true;
+		if (stones[i].velocity(1) != 0.0) return true;
 	}
 	return false;
 }
