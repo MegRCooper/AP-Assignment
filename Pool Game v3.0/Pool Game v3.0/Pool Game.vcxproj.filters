@@ -41,6 +41,18 @@
     <ClInclude Include="glut-3.7.6-bin\glut.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
+    <ClInclude Include="player.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="serialisedThreadedClient.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="networkInp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="macroDefs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />

@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #include "stdafx.h"
+#include "player.h"
 #include <glut.h>
 #include <math.h>
 #include "simulation.h"
-
 
 // Aim Line variables:
 float gAimAngle = 0.0;
@@ -30,28 +30,11 @@ bool gCamD = false;
 bool gCamZin = false;
 bool gCamZout = false;
 
+Player player;
+
+
 // Rendering Options:
 #define DRAW_SOLID	(0)
-
-/**
-	VOID DOCAMERA:
-	This funxtion rotates the camera around its center point.
-	It takes an int value [ms], which represents milliseconds.
-	The first line of code creates a variable named up stores three vars [0.0, 1.0, and 0.0]
-	respectively for x-, y- and z-axis coordinates. (represents the direction towards the top of the screen).
-
-	If gCamRotate is true, then vec3 camDir = (gCamLookAt - gCamPos).Normalized()
-	if gCamL is true will be carried out, and camDir will have a value between -1 and 1, depending on whether you are looking at your character's left or right side;
-	This indicates that the distance from your character's center point will be represented by a positive number when looking leftward from their position,
-	while the distance from their center point will be represented by a negative number when looking rightward; As long as they stay within those bounds,
-	these values can range from -1 to 1, but since our program only requires one type of value to be returned by this function, we'll use integers instead.
-
-	 SIMPLE EXPLANATION:
-	 The code is used to rotate the camera.
-	 The first part of the code rotates the camera around its centre point, which is gCamPos.
-	 The second part of the code rotates the camera around its right-hand side, which is gCamR.
-	 The third part of the code rotates the camera around its left-hand side, which is gCamL.
-**/
 
 void DoCamera(int ms) {
 	static const vec3 up(0.0, 1.0, 0.0);
@@ -137,97 +120,62 @@ void DoCamera(int ms) {
 	}
 }
 
-/**
-	RENDERSCENE(VOID)
-	Drawing of the stones:
-		The code starts by declaring a variable called stonesOnTarget an int used to keep track of how many times the player has successfully hit the target with a stone.
-	The code then loops through all of the curling stones on the sheet and checks if they have a NULL value for their tTarget field, which means they are not currently targeting anything.
-	If true, then it sets glColor3f(0.0, 0.0, 1.0) and glPushMatrix() before translating them into position relative to where they were originally placed in relation to each other (STONE_RADIUS / 2).
-	It then draws a solid sphere using glutSolidSphere() or wire spheres using glutWireSphere(). - MAY BE CHANGED
-	After drawing these objects, it pops back out of matrix mode and increments stonesOnTarget by one because now there's one more stone on target than when it started looping through all of the
-	curling stones on the sheet again later in its code block after checking if any new ones had been added since last time around.
-	The code iterates through all the stones on the sheet and checks if their target is NULL.
-	If it is, then it draws a red sphere around the stone with its radius of 32 units.
-	If not, then it increments the value of stonesOnTarget by one and draws a blue sphere with its radius of 12 units.
 
-	Drawing of the Players Stone:
-	 Used to draw a solid sphere.
-	 Using the glTranslatef() function to move the sphere from its current position to another point on the screen.
-	 First checks if there are more than one stone left in the target and if so, it will draw them as a group.
-	 If not, then it will draw each stone individually.
-
-	 Drawing of the curlingsheet:
-	 Then it draws a line for each edge of the curling sheet, which is done in two loops.
-		 The first loop draws lines from the start vertex to the end vertex and then back again; this creates an aiming line that will be used later on when calculating where to place stones.
-		 The second loop draws lines from one stone's position to another stone's position, creating a path between them that can be seen as they curl around each other.
-	 Drawing the curling sheet with glBegin(GL_TRIANGLES).
-	 Useing glVertex3f() functions to draw vertices at points 0 and 1 of every triangle in order (0,1), 2 and 3 (2,3), 4 and 5 (4,5), 6 and 7 (6,7) etc., until all triangles have been drawn.
-	 Next it uses glColor3f() functions to set colors for every point on every triangle: red for point 0; green for point 1; blue for point 2 etc.
-		These colors are used later on when drawing stones so that they can be distinguished from one another while still being part of their respective paths.
-	 After this step has completed successfully,
-	 The code is a fragment of code that draws the curling sheet.
-	 The code begins by drawing the background and then, it draws all the stones on the sheet.
-	 The stonePos() function is used to find where each stone is located in relation to the center of the screen.
-
-**/
-
-void RenderScene(void) {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// Sets camera
-	glLoadIdentity();
-	gluLookAt(gCamPos(0), gCamPos(1), gCamPos(2), gCamLookAt(0), gCamLookAt(1), gCamLookAt(2), 0.0f, 1.0f, 0.0f);
-
-	// Draws the stone - THIS NEEDS CHANGING OF THE SHAPE AS THESE ARE SPHERICAL 
-	for (int i = 0; i < NUM_STONES; i++) {
-
-		glColor3f(0.0, 0.0, 1.0);
-		glPushMatrix();
-		glTranslatef(gCurlingSheet.stones[i].stonePos(0), (STONE_RADIUS / 2.0), gCurlingSheet.stones[i].stonePos(1));
-		glutSolidSphere(gCurlingSheet.stones[i].radius, 12, 12);
-		glPopMatrix();
-	}
-
-	//Draw the curling Sheet
-	glColor3f(0.0f, 0.5f, 0.5f);
-	for (int i = 0; i < NUM_EDGES; i++) {
-		glBegin(GL_LINE_LOOP);
-		glVertex3f(gCurlingSheet.edges[i].vertices[0](0), 0.0, gCurlingSheet.edges[i].vertices[0](1));
-		glVertex3f(gCurlingSheet.edges[i].vertices[0](0), 0.1, gCurlingSheet.edges[i].vertices[0](1));
-		glVertex3f(gCurlingSheet.edges[i].vertices[1](0), 0.1, gCurlingSheet.edges[i].vertices[1](1));
-		glVertex3f(gCurlingSheet.edges[i].vertices[1](0), 0.0, gCurlingSheet.edges[i].vertices[1](1));
-		glEnd();
-	}
-
-	//Draw the Target.
-	for (int i = 0; i < NUM_RINGS; i++) {
-		glPushMatrix();
-		if (i % 2 == 0) { glColor3f(1.0, 1.0, 1.0); } // White Rings 
-		else { glColor3f(1.0, 0.0, 0.0); } // Red Rings 
-		GLUquadric* quadric;
-		quadric = gluNewQuadric();
-		glTranslatef(gCurlingSheet.rings[i].targetCenter(0), (-0.001 * i), gCurlingSheet.rings[i].targetCenter(1));
-		glRotatef(9 * 10, 1.0f, 0.0f, 0.0f);
-		gluDisk(quadric, 0, TARGET_SPACING * i, 15, 15);
-		gluDeleteQuadric(quadric);
-		glPopMatrix();
-	}
-
-	// Draw the Aiming Line
-	if (gDoAim) {
-		glBegin(GL_LINES);
-		float cuex = sin(gAimAngle) * gAimPower;
-		float cuez = cos(gAimAngle) * gAimPower;
-		glColor3f(0.0, 1.0, 0.0);
-		glVertex3f(gCurlingSheet.stones[gCurlingSheet.currntStone].stonePos(0), (STONE_RADIUS / 2.0f), gCurlingSheet.stones[gCurlingSheet.currntStone].stonePos(1));
-		glVertex3f((gCurlingSheet.stones[gCurlingSheet.currntStone].stonePos(0) + cuex), (STONE_RADIUS / 2.0f), (gCurlingSheet.stones[gCurlingSheet.currntStone].stonePos(1) + cuez));
-		glEnd();
-	}
-	glFlush();
-	glutSwapBuffers();
-}
-
-
+//void RenderScene(void) {
+//	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//
+//	// Sets camera
+//	glLoadIdentity();
+//	gluLookAt(gCamPos(0), gCamPos(1), gCamPos(2), gCamLookAt(0), gCamLookAt(1), gCamLookAt(2), 0.0f, 1.0f, 0.0f);
+//
+//	// Draws the stone - THIS NEEDS CHANGING OF THE SHAPE AS THESE ARE SPHERICAL 
+//	for (int i = 0; i < NUM_STONES; i++) {
+//
+//		glColor3f(0.0, 0.0, 1.0);
+//		glPushMatrix();
+//		glTranslatef(gCurlingSheet.stones[i].stonePos(0), (STONE_RADIUS / 2.0), gCurlingSheet.stones[i].stonePos(1));
+//		glutSolidSphere(gCurlingSheet.stones[i].radius, 12, 12);
+//		glPopMatrix();
+//	}
+//
+//	//Draw the curling Sheet
+//	glColor3f(0.0f, 0.5f, 0.5f);
+//	for (int i = 0; i < NUM_EDGES; i++) {
+//		glBegin(GL_LINE_LOOP);
+//		glVertex3f(gCurlingSheet.edges[i].vertices[0](0), 0.0, gCurlingSheet.edges[i].vertices[0](1));
+//		glVertex3f(gCurlingSheet.edges[i].vertices[0](0), 0.1, gCurlingSheet.edges[i].vertices[0](1));
+//		glVertex3f(gCurlingSheet.edges[i].vertices[1](0), 0.1, gCurlingSheet.edges[i].vertices[1](1));
+//		glVertex3f(gCurlingSheet.edges[i].vertices[1](0), 0.0, gCurlingSheet.edges[i].vertices[1](1));
+//		glEnd();
+//	}
+//
+//	//Draw the Target.
+//	for (int i = 0; i < NUM_RINGS; i++) {
+//		glPushMatrix();
+//		if (i % 2 == 0) { glColor3f(1.0, 1.0, 1.0); } // White Rings 
+//		else { glColor3f(1.0, 0.0, 0.0); } // Red Rings 
+//		GLUquadric* quadric;
+//		quadric = gluNewQuadric();
+//		glTranslatef(gCurlingSheet.rings[i].targetCenter(0), (-0.001 * i), gCurlingSheet.rings[i].targetCenter(1));
+//		glRotatef(9 * 10, 1.0f, 0.0f, 0.0f);
+//		gluDisk(quadric, 0, TARGET_SPACING * i, 15, 15);
+//		gluDeleteQuadric(quadric);
+//		glPopMatrix();
+//	}
+//
+//	// Draw the Aiming Line
+//	if (gDoAim) {
+//		glBegin(GL_LINES);
+//		float cuex = sin(gAimAngle) * gAimPower;
+//		float cuez = cos(gAimAngle) * gAimPower;
+//		glColor3f(0.0, 1.0, 0.0);
+//		glVertex3f(gCurlingSheet.stones[gCurlingSheet.currntStone].stonePos(0), (STONE_RADIUS / 2.0f), gCurlingSheet.stones[gCurlingSheet.currntStone].stonePos(1));
+//		glVertex3f((gCurlingSheet.stones[gCurlingSheet.currntStone].stonePos(0) + cuex), (STONE_RADIUS / 2.0f), (gCurlingSheet.stones[gCurlingSheet.currntStone].stonePos(1) + cuez));
+//		glEnd();
+//	}
+//	glFlush();
+//	glutSwapBuffers();
+//}
 
 // NOT CHANGED ANY OF THE BELOW AS ITS FROM THE BASE CODE PROVIDED IN WORKSHOP WEEK 4:
 void SpecKeyboardFunc(int key, int x, int y) {
@@ -451,10 +399,10 @@ int _tmain(int argc, _TCHAR* argv[]) {
 #if DRAW_SOLID
 	InitLights();
 #endif
-	glutDisplayFunc(RenderScene);
+	// glutDisplayFunc(RenderScene);
 	glutTimerFunc(SIM_UPDATE_MS, UpdateScene, SIM_UPDATE_MS);
 	glutReshapeFunc(ChangeSize);
-	glutIdleFunc(RenderScene);
+	// glutIdleFunc(RenderScene);
 
 	glutIgnoreKeyRepeat(1);
 	glutKeyboardFunc(KeyboardFunc);

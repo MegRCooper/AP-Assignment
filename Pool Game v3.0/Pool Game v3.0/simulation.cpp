@@ -38,9 +38,6 @@ void edge::MakeCentre(void) {
 	centre /= 2.0;
 }
 
-// Player class Members:
-int player::playerIndxCnt = 0;
-
 /**
 	STONE CLASS MEMBERS:
 		Defines two variables - rowIndex [stores the current row number], row [stores the current column number.]
