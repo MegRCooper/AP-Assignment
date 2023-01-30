@@ -11,11 +11,12 @@
 #define	SIM_UPDATE_MS	(10)
 #define NUM_STONES		(16) // Needs to be changed.		
 #define NUM_EDGES		(4)	
-#define NUM_RINGS		(4)
+#define NUM_RINGS		(5)
 #define TARGET_SPACING	(0.065f)
 #define MAX_PARTICLES	(150)
 #define MAX_PLAYERS		(4)
 #define MIN_PLAYERS		(2)
+#define SHEETGAP		(0.3f)
 
 /**
 	EDGE CLASS:
@@ -81,6 +82,7 @@ public:
 	float mass;
 	int indx;
 	target* tTarget;
+	bool isTeamOne = true;
 	bool isPlayerStone;
 
 	stone() : stonePos(0.0), velocity(0.0), radius(STONE_RADIUS), mass(STONE_MASS), tTarget(NULL), isPlayerStone(false) {
@@ -148,6 +150,13 @@ public:
 	void update(int ms);
 };
 
+class Player {
+public:
+	int playerNum;
+	int score;
+	Player();
+};
+
 /**
 	CURLING SHEET CLASS:
 		Defines three variables stones, edges, rings
@@ -166,10 +175,12 @@ public:
 	target rings[NUM_RINGS];
 	particleSet parts;
 	int currntStone = 0;
+	int scores[2] = {0,0};
 	void SetUpEdges(void);
 	void SetUpRings(void);
 	void Update(int ms);
 	bool AnyStonesMoving(void) const;
+	
 };
 
 

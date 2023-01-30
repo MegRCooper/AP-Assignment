@@ -89,7 +89,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="networkInp.cpp" />
     <ClCompile Include="Pool Game.cpp">
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">glut-3.7.6-bin;%</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ClCompile Include="serialisedThreadedClient.cpp">
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">glut-3.7.6-bin;%</AdditionalIncludeDirectories>
     </ClCompile>
     <ClCompile Include="simulation.cpp">
@@ -101,9 +105,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="glut-3.7.6-bin\glut.h" />
-    <ClInclude Include="macroDefs.h" />
     <ClInclude Include="networkInp.h" />
-    <ClInclude Include="player.h" />
     <ClInclude Include="serialisedThreadedClient.h" />
     <ClInclude Include="simulation.h" />
     <ClInclude Include="stdafx.h" />

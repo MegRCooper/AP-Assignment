@@ -1,9 +1,9 @@
 #include "stdafx.h"
-#include "stdafx.h"
-#include "player.h"
-#include <glut.h>
 #include <math.h>
 #include "simulation.h"
+#include "SerialisedThreadedClient.h"
+#include "networkInp.h"
+#include <glut.h>
 
 // Aim Line variables:
 float gAimAngle = 0.0;
@@ -30,8 +30,9 @@ bool gCamD = false;
 bool gCamZin = false;
 bool gCamZout = false;
 
+Client client;
+networkInp netInp;
 Player player;
-
 
 // Rendering Options:
 #define DRAW_SOLID	(0)
@@ -121,61 +122,76 @@ void DoCamera(int ms) {
 }
 
 
-//void RenderScene(void) {
-//	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//
-//	// Sets camera
-//	glLoadIdentity();
-//	gluLookAt(gCamPos(0), gCamPos(1), gCamPos(2), gCamLookAt(0), gCamLookAt(1), gCamLookAt(2), 0.0f, 1.0f, 0.0f);
-//
-//	// Draws the stone - THIS NEEDS CHANGING OF THE SHAPE AS THESE ARE SPHERICAL 
-//	for (int i = 0; i < NUM_STONES; i++) {
-//
-//		glColor3f(0.0, 0.0, 1.0);
-//		glPushMatrix();
-//		glTranslatef(gCurlingSheet.stones[i].stonePos(0), (STONE_RADIUS / 2.0), gCurlingSheet.stones[i].stonePos(1));
-//		glutSolidSphere(gCurlingSheet.stones[i].radius, 12, 12);
-//		glPopMatrix();
-//	}
-//
-//	//Draw the curling Sheet
-//	glColor3f(0.0f, 0.5f, 0.5f);
-//	for (int i = 0; i < NUM_EDGES; i++) {
-//		glBegin(GL_LINE_LOOP);
-//		glVertex3f(gCurlingSheet.edges[i].vertices[0](0), 0.0, gCurlingSheet.edges[i].vertices[0](1));
-//		glVertex3f(gCurlingSheet.edges[i].vertices[0](0), 0.1, gCurlingSheet.edges[i].vertices[0](1));
-//		glVertex3f(gCurlingSheet.edges[i].vertices[1](0), 0.1, gCurlingSheet.edges[i].vertices[1](1));
-//		glVertex3f(gCurlingSheet.edges[i].vertices[1](0), 0.0, gCurlingSheet.edges[i].vertices[1](1));
-//		glEnd();
-//	}
-//
-//	//Draw the Target.
-//	for (int i = 0; i < NUM_RINGS; i++) {
-//		glPushMatrix();
-//		if (i % 2 == 0) { glColor3f(1.0, 1.0, 1.0); } // White Rings 
-//		else { glColor3f(1.0, 0.0, 0.0); } // Red Rings 
-//		GLUquadric* quadric;
-//		quadric = gluNewQuadric();
-//		glTranslatef(gCurlingSheet.rings[i].targetCenter(0), (-0.001 * i), gCurlingSheet.rings[i].targetCenter(1));
-//		glRotatef(9 * 10, 1.0f, 0.0f, 0.0f);
-//		gluDisk(quadric, 0, TARGET_SPACING * i, 15, 15);
-//		gluDeleteQuadric(quadric);
-//		glPopMatrix();
-//	}
-//
-//	// Draw the Aiming Line
-//	if (gDoAim) {
-//		glBegin(GL_LINES);
-//		float cuex = sin(gAimAngle) * gAimPower;
-//		float cuez = cos(gAimAngle) * gAimPower;
-//		glColor3f(0.0, 1.0, 0.0);
-//		glVertex3f(gCurlingSheet.stones[gCurlingSheet.currntStone].stonePos(0), (STONE_RADIUS / 2.0f), gCurlingSheet.stones[gCurlingSheet.currntStone].stonePos(1));
-//		glVertex3f((gCurlingSheet.stones[gCurlingSheet.currntStone].stonePos(0) + cuex), (STONE_RADIUS / 2.0f), (gCurlingSheet.stones[gCurlingSheet.currntStone].stonePos(1) + cuez));
-//		glEnd();
-//	}
-//	glFlush();
-//	glutSwapBuffers();
-//}
+void RenderScene(void) {
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// Sets camera
+	glLoadIdentity();
+	gluLookAt(gCamPos(0), gCamPos(1), gCamPos(2), gCamLookAt(0), gCamLookAt(1), gCamLookAt(2), 0.0f, 1.0f, 0.0f);
+
+	// Draws the stone - THIS NEEDS CHANGING OF THE SHAPE AS THESE ARE SPHERICAL 
+	for (int i = 0; i < NUM_STONES; i++) {
+		if (gCurlingSheet.stones[i].isTeamOne){ glColor3f(0.0, 0.0, 1.0); }
+		else { glColor3f(1.0, 0.0, 0.0); }
+		
+		glPushMatrix();
+		glTranslatef(gCurlingSheet.stones[i].stonePos(0), (STONE_RADIUS / 2.0), gCurlingSheet.stones[i].stonePos(1));
+		glutSolidSphere(gCurlingSheet.stones[i].radius, 12, 12);
+		glPopMatrix();
+	}
+
+	//Draw the curling Sheet
+	glColor3f(0.0f, 0.5f, 0.5f);
+	for (int i = 0; i < NUM_EDGES; i++) {
+		glBegin(GL_LINE_LOOP);
+		glVertex3f(gCurlingSheet.edges[i].vertices[0](0), 0.0, gCurlingSheet.edges[i].vertices[0](1));
+		glVertex3f(gCurlingSheet.edges[i].vertices[0](0), 0.1, gCurlingSheet.edges[i].vertices[0](1));
+		glVertex3f(gCurlingSheet.edges[i].vertices[1](0), 0.1, gCurlingSheet.edges[i].vertices[1](1));
+		glVertex3f(gCurlingSheet.edges[i].vertices[1](0), 0.0, gCurlingSheet.edges[i].vertices[1](1));
+		glEnd();
+	}
+
+	//Draw the Target.
+	for (int i = 0; i < NUM_RINGS; i++) {
+		glPushMatrix();
+		if (i % 2 == 0) { glColor3f(1.0, 1.0, 1.0); } // White Rings 
+		else { glColor3f(1.0, 0.0, 0.0); } // Red Rings 
+		GLUquadric* quadric;
+		quadric = gluNewQuadric();
+		glTranslatef(gCurlingSheet.rings[i].targetCenter(0), (-0.001 * i), gCurlingSheet.rings[i].targetCenter(1));
+		glRotatef(9 * 10, 1.0f, 0.0f, 0.0f);
+		gluDisk(quadric, 0, TARGET_SPACING * i, 15, 15);
+		gluDeleteQuadric(quadric);
+		glPopMatrix();
+	}
+
+	// Draw the Aiming Line
+	if (gDoAim) {
+		glBegin(GL_LINES);
+		float cuex = sin(gAimAngle) * gAimPower;
+		float cuez = cos(gAimAngle) * gAimPower;
+		glColor3f(0.0, 1.0, 0.0);
+		glVertex3f(gCurlingSheet.stones[gCurlingSheet.currntStone].stonePos(0), (STONE_RADIUS / 2.0f), gCurlingSheet.stones[gCurlingSheet.currntStone].stonePos(1));
+		glVertex3f((gCurlingSheet.stones[gCurlingSheet.currntStone].stonePos(0) + cuex), (STONE_RADIUS / 2.0f), (gCurlingSheet.stones[gCurlingSheet.currntStone].stonePos(1) + cuez));
+		glEnd();
+	}
+
+	// Scoreboard?
+	glPushMatrix();
+	glRasterPos3d(1, 0, 0);
+	// Strings for the scores
+	std::string scoresOutput = "Team One: " + std::to_string(gCurlingSheet.scores[0]) + " | Team Two: " + std::to_string(gCurlingSheet.scores[1]);
+	// Outputs the score in Char format.
+	for (char c : scoresOutput) {
+		glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, c);
+	}
+	glTranslatef(0, 0, 0);
+	glPopMatrix();
+
+
+	glFlush();
+	glutSwapBuffers();
+}
 
 // NOT CHANGED ANY OF THE BELOW AS ITS FROM THE BASE CODE PROVIDED IN WORKSHOP WEEK 4:
 void SpecKeyboardFunc(int key, int x, int y) {
@@ -237,7 +253,6 @@ void KeyboardFunc(unsigned char key, int x, int y) {
 				(-cos(gAimAngle) * gAimPower * gPlayerStoneFactor));
 			gCurlingSheet.stones[gCurlingSheet.currntStone].ApplyImpulse(imp);
 			gCurlingSheet.currntStone++;
-
 		}
 		break;
 	}
@@ -364,29 +379,53 @@ void InitLights(void) {
 }
 
 void UpdateScene(int ms) {
-	if (gCurlingSheet.AnyStonesMoving() == false) { 
-		gDoAim = true; 
+	if (gCurlingSheet.AnyStonesMoving() == false) {
+		gDoAim = true;
 		gCurlingSheet.stones[gCurlingSheet.currntStone].stonePos(0) = 0;
 		gCurlingSheet.stones[gCurlingSheet.currntStone].stonePos(1) = TABLE_Z - 0.25;
 	}
-	else gDoAim = false;
-	if (gDoAim) {
-		if (gAimControl[0]) gAimAngle -= ((gAimAngleSpeed * ms) / 1000);
-		if (gAimControl[1]) gAimAngle += ((gAimAngleSpeed * ms) / 1000);
-		if (gAimAngle < 0.0) gAimAngle += TWO_PI;
-		if (gAimAngle > TWO_PI) gAimAngle -= TWO_PI;
-		if (gAimControl[2]) gAimPower += ((gAimPowerSpeed * ms) / 1000);
-		if (gAimControl[3]) gAimPower -= ((gAimPowerSpeed * ms) / 1000);
-		if (gAimPower > gAimPowerMax) gAimPower = gAimPowerMax;
-		if (gAimPower < gAimPowerMin) gAimPower = gAimPowerMin;
+	else {
+		gDoAim = false;
+		gCurlingSheet.scores[0] = 0;
+		gCurlingSheet.scores[1] = 0;
+		for (int i = 0; i < gCurlingSheet.currntStone; i++) {
+			double stonePoints = 0.0;
+			stonePoints = sqrt(pow(gCurlingSheet.stones[i].stonePos(0), 2) + pow(gCurlingSheet.stones[i].stonePos(1) - (gCurlingSheet.rings[0].targetCenter(1)), 2)); // Euclideian Dist
+			if (stonePoints <= (NUM_RINGS - 1) * TARGET_SPACING) {
+				stonePoints /= (NUM_RINGS - 1) * TARGET_SPACING;
+				stonePoints *= (NUM_RINGS - 1);
+				stonePoints -= (NUM_RINGS - 1);
+				stonePoints = 0 - stonePoints;
+				stonePoints += 1;
+				// Addind points to the players.
+				if (gCurlingSheet.stones[i].isTeamOne) {
+					gCurlingSheet.scores[0] += stonePoints;
+				}
+				else {
+					gCurlingSheet.scores[1] += stonePoints;
+				}
+			}
+		}
 	}
-	DoCamera(ms);
-	gCurlingSheet.Update(ms);
-	glutTimerFunc(SIM_UPDATE_MS, UpdateScene, SIM_UPDATE_MS);
-	glutPostRedisplay();
-}
 
-int _tmain(int argc, _TCHAR* argv[]) {
+		if (gDoAim) {
+			if (gAimControl[0]) gAimAngle -= ((gAimAngleSpeed * ms) / 1000);
+			if (gAimControl[1]) gAimAngle += ((gAimAngleSpeed * ms) / 1000);
+			if (gAimAngle < 0.0) gAimAngle += TWO_PI;
+			if (gAimAngle > TWO_PI) gAimAngle -= TWO_PI;
+			if (gAimControl[2]) gAimPower += ((gAimPowerSpeed * ms) / 1000);
+			if (gAimControl[3]) gAimPower -= ((gAimPowerSpeed * ms) / 1000);
+			if (gAimPower > gAimPowerMax) gAimPower = gAimPowerMax;
+			if (gAimPower < gAimPowerMin) gAimPower = gAimPowerMin;
+		}
+
+		DoCamera(ms);
+		gCurlingSheet.Update(ms);
+		glutTimerFunc(SIM_UPDATE_MS, UpdateScene, SIM_UPDATE_MS);
+		glutPostRedisplay();
+	}
+
+int _tmain(int argc, _TCHAR * argv[]) {
 	gCurlingSheet.SetUpEdges();
 	gCurlingSheet.SetUpRings();
 	gCurlingSheet.stones[0].SetPlayerStone();
@@ -399,10 +438,10 @@ int _tmain(int argc, _TCHAR* argv[]) {
 #if DRAW_SOLID
 	InitLights();
 #endif
-	// glutDisplayFunc(RenderScene);
+	glutDisplayFunc(RenderScene);
 	glutTimerFunc(SIM_UPDATE_MS, UpdateScene, SIM_UPDATE_MS);
 	glutReshapeFunc(ChangeSize);
-	// glutIdleFunc(RenderScene);
+	glutIdleFunc(RenderScene);
 
 	glutIgnoreKeyRepeat(1);
 	glutKeyboardFunc(KeyboardFunc);

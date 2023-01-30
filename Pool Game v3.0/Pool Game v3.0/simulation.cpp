@@ -1,8 +1,6 @@
 // Simulation Source File:
 #include "stdafx.h"
 #include "simulation.h"
-#include <stdio.h>
-#include <stdlib.h>
 
 // MACROS:
 #define SMALL_VEL (0.01f)
@@ -60,6 +58,10 @@ void stone::Reset(void) {
 		stonePos(1) = TABLE_Z + (0.1 * indx);
 		stonePos(0) = -0.5;
 	}
+	if (indx % 2 == 0) {
+		isTeamOne = true;
+	}
+	else { isTeamOne = false; }
 
 }
 
@@ -180,7 +182,7 @@ void stone::HitStone(stone& s) {
 	s.velocity = parallelV2 + (relDir * perpVNew2);
 
 	// Adding of particles for clashes between stones:
-	int randNumParts = (rand() % 5) + 5;
+	int randNumParts = (1 % 5) + 5;
 	vec3 pos(stonePos(0), radius / 2.0, stonePos(1));
 	vec3 oset(relDir(0), 0.0, relDir(1));
 	pos += (oset * radius);
@@ -189,7 +191,7 @@ void stone::HitStone(stone& s) {
 	}
 }
 
-void stone::SetPlayerStone() {
+void stone::SetPlayerStone(void) {
 	isPlayerStone = true;
 }
 
@@ -221,9 +223,9 @@ void particleSet::AddParticle(const vec3& pos) {
 	particles[num] = new particle;
 	particles[num]-> partPos = pos;
 
-	particles[num]->partVel(0) = ((rand() % 200) - 100) / 200.0;
-	particles[num]->partVel(2) = ((rand() % 200) - 100) / 200.0;
-	particles[num]->partVel(1) = 2.0 * ((rand() % 100) / 100.0);
+	particles[num]->partVel(0) = ((1% 200) - 100) / 200.0;
+	particles[num]->partVel(2) = ((1 % 200) - 100) / 200.0;
+	particles[num]->partVel(1) = 2.0 * ((1 % 100) / 100.0);
 
 	num++;
 }
@@ -239,6 +241,11 @@ void particleSet::update(int ms) {
 		}
 		else i++;
 	}
+}
+
+Player::Player() {
+	playerNum = 0;
+	score = 0;
 }
 
 /**
