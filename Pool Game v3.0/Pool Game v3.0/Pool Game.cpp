@@ -32,7 +32,6 @@ bool gCamZout = false;
 
 Client client;
 networkInp netInp;
-Player player;
 
 // Rendering Options:
 #define DRAW_SOLID	(0)
@@ -176,7 +175,7 @@ void RenderScene(void) {
 		glEnd();
 	}
 
-	// Scoreboard?
+	// Scoreboard ? 
 	glPushMatrix();
 	glRasterPos3d(1, 0, 0);
 	// Strings for the scores
@@ -248,11 +247,14 @@ void KeyboardFunc(unsigned char key, int x, int y) {
 	switch (key) {
 	case(13):
 	{
-		if (gDoAim) {
-			vec2 imp((-sin(gAimAngle) * gAimPower * gPlayerStoneFactor),
-				(-cos(gAimAngle) * gAimPower * gPlayerStoneFactor));
+		if (gDoAim) // If enter is pressed the shotcan be played.
+		{
+			vec2 imp((-sin(gAimAngle) * gAimPower * gPlayerStoneFactor), (-cos(gAimAngle) * gAimPower * gPlayerStoneFactor));
 			gCurlingSheet.stones[gCurlingSheet.currntStone].ApplyImpulse(imp);
-			gCurlingSheet.currntStone++;
+			gCurlingSheet.stones[gCurlingSheet.currntStone].isPlayerStone = true;
+			client.message = "B|" + to_string(imp(0)) + "|" + to_string(imp(1));
+			client.sendMsg();
+			gCurlingSheet.currntStone += 1;
 		}
 		break;
 	}
@@ -379,6 +381,25 @@ void InitLights(void) {
 }
 
 void UpdateScene(int ms) {
+	if (netInp.updateScores) {
+		netInp.DisplayScores();
+		netInp.updateScores = false;
+	}
+
+	// Get Network Inputs
+	for (int i = 0; i < netInp.maxSheets; i++) {
+		if (netInp.posChange[i]) {
+			gCurlingSheet.stones[gCurlingSheet.currntStone].stonePos(0) = netInp.stonePos[i];
+			gCurlingSheet.stones[gCurlingSheet.currntStone].stonePos(1) = 1.0;
+			netInp.posChange[i] = false;
+		}
+		if (netInp.impChange[i]) {
+			gCurlingSheet.stones[gCurlingSheet.currntStone].ApplyImpulse(netInp.stoneImps[i]);
+			netInp.impChange[i] = false;
+			gCurlingSheet.stones[gCurlingSheet.currntStone].isPlayerStone = true;
+		}
+	}
+
 	if (gCurlingSheet.AnyStonesMoving() == false) {
 		gDoAim = true;
 		gCurlingSheet.stones[gCurlingSheet.currntStone].stonePos(0) = 0;
@@ -426,9 +447,24 @@ void UpdateScene(int ms) {
 	}
 
 int _tmain(int argc, _TCHAR * argv[]) {
-	gCurlingSheet.SetUpEdges();
-	gCurlingSheet.SetUpRings();
-	gCurlingSheet.stones[0].SetPlayerStone();
+	string hostIP;
+	string port;
+	cout << "Enter an IP address: \n" << endl;
+	cin >> hostIP;
+	cout << "Enter the port: \n" << endl;
+	cin >> port;
+	client.start(hostIP.c_str(), port.c_str(), &netInp);
+	std::thread thOne(&Client::getMsg, &client); // this makes it so the game and receiving messages from the server aare concurrent  
+	thOne.detach();
+
+	for (int i = 0; i < SHEETCOUNT; i++) {
+		gCurlingSheet.SetUpEdges();
+		gCurlingSheet.SetUpRings();
+		gCurlingSheet.stones[0].SetPlayerStone();
+	}
+	
+	while (!netInp.welcomeRecieved) {} // this just holds you until the connection is confirmed
+	
 	glutInit(&argc, ((char**)argv));
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowPosition(0, 0);

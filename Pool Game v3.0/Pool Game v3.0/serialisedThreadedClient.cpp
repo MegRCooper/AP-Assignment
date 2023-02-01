@@ -47,6 +47,7 @@ void Client::start(const char* IPAddress, const char* port, networkInp* networkI
 		printf("Unable to connect to server! \n");
 		WSACleanup();
 	}
+	
 };
 
 void Client::sendMsg() {
@@ -71,9 +72,9 @@ void Client::getMsg() {
 		}
 
 		if (fullBuffer.length() > 0 && (fullBuffer[0] != 'I')) { // 'I' is a placeholder, used to ignore message.
-			if (fullBuffer[0] == 'C') {
+			if (fullBuffer[1] == 'C') {
 				cout << "Connected to the server" << endl;
-				if (fullBuffer[1] == 'P1') {
+				if (fullBuffer[2] == '1') {
 					netInp->mainPlayer = true;
 				}
 				else {
